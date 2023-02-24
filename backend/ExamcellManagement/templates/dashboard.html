@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Admin Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+      /* Custom CSS styles */
+      body {
+        padding-top: 4.5rem;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        color: #333;
+        background-color: #f9f9f9;
+      }
+      .navbar {
+        background-color: #333;
+      }
+      .navbar-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+      .sidebar {
+        position: fixed;
+        top: 4.5rem;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        padding: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        border-right: 1px solid #ddd;
+      }
+      .sidebar-sticky {
+        position: relative;
+        top: 0;
+        height: calc(100vh - 4.5rem);
+        padding: 1rem;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      .nav-link {
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        color: #333;
+        text-decoration: none;
+        border-left: 3px solid transparent;
+      }
+      .nav-link:hover,
+      .nav-link:focus {
+        color: #333;
+        background-color: #e9ecef;
+        border-left-color: #333;
+      }
+      .nav-link.active {
+        color: #333;
+        background-color: #f8f9fa;
+        border-left-color: #333;
+      }
+      .main {
+        padding: 2rem;
+        margin-left: 16.5rem;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 700;
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+     
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-dark bg-dark fixed-top">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <a class="navbar-brand" href="#">Admin Dashboard</a>
+    </nav>
+    <div class="container-fluid">
+      <div class="row"  >
+        <div class="collapse show" id="sidebar">
+        <nav class="col-md-2 d-none d-md-block sidebar">
+          <div class="sidebar-sticky">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link active" href="#">Dashboard</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">stafflist</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Add & manage rooms</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Seating arrangement</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Allocate Duties</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Staff attendance</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Notification</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">view reported Malpractice</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'admin_logout' %}">Logout</a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+          <h1 class="mt-3">Dashboard</h1>
+          <p>Welcome to the admin dashboard!</p>
+        </main>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+    $(document).ready(function() {
+    // Toggle sidebar
+    $('[data-toggle="offcanvas"]').on('click', function() {
+    $('.sidebar-collapse').toggleClass('open');
+    });
+    });
+    </script>
+    
+    
+  </body>
+</html>
