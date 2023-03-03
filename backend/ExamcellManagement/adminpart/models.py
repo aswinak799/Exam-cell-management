@@ -41,8 +41,20 @@ class schedule(models.Model):
 
 class subject(models.Model):
     code = models.CharField(max_length=20)
-    branch = models.CharField(max_length=20)
+    branch = models.CharField(max_length=100)
     sub_name = models.CharField(max_length=100)
+    def __str__(self):
+        return self.code
+    
+class countList(models.Model):
+    subject_id = models.ForeignKey(subject,on_delete=models.CASCADE)
+    count = models.IntegerField()
+
+class studentDetails(models.Model):
+    reg_no = models.CharField(max_length=20)
+    student = models.CharField(max_length=90)
+    subject = models.ForeignKey(subject,on_delete=models.CASCADE)
+    schedule = models.ForeignKey(schedule,on_delete=models.CASCADE)
 
 
 
@@ -52,6 +64,7 @@ class schedule_details(models.Model):
     reg_no = models.CharField(max_length=25)
     student = models.CharField(max_length=100)
     subject_id = models.ForeignKey(subject,on_delete=models.CASCADE)
+    seat_no = models.IntegerField()
 
 class staff_Attendance(models.Model):
     staff_id = models.ForeignKey(staff,on_delete=models.CASCADE)
@@ -69,6 +82,13 @@ class report_malpractice(models.Model):
     image = models.ImageField()
     message = models.CharField(max_length=250)
     staff_id = models.ForeignKey(staff,on_delete=models.CASCADE)
+
+class upload_excel_sheet(models.Model):
+    appearing_list = models.FileField()
+    date = models.DateField()
+    session = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+
     
 
 

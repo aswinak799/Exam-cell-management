@@ -1,0 +1,83 @@
+
+body{
+    margin: 0;
+    padding: 0;
+}
+
+.NavBar{
+    /* position: fixed; */
+    top: 0;
+    width: 100%;
+    height: 8%;
+    padding: 20px;
+    justify-content: space-between;
+    display: flex;
+    background-color:#1D66A7;
+    color: #fff;
+}
+.logo{
+    position: fixed;
+    left: 20px;
+    width: 100px;
+    filter: grayscale(100);
+}
+
+.mid{
+    background-image: url('../images/kmct.jpg');
+    background-size: 100% 650px;
+    
+
+    width: 100%;
+    height: 650px;
+}
+
+
+.login{
+    color: #654986;
+    font-weight: bolder;
+    font-size: 60px;
+    font-family:monospace;
+    text-align: center;
+}
+
+.card{
+    margin-right: auto;
+    margin-left: auto;
+    
+    box-shadow: 0 15px 25px rgba(129, 124, 124, 0.2);
+    
+    border-radius: 5px;
+    backdrop-filter: blur(14px);
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 10px;
+    text-align: center;
+}
+.card :hover{
+    cursor: pointer;
+    
+}
+
+.btn-primary{
+    border-radius: 20px;
+    width: 100%;
+    transition: 2s all ease;
+}
+
+.btn-primary:hover{
+   transform:scale(0.9);
+   background-color: cornflowerblue;
+}
+
+
+.form-control{
+    border-radius: 20px;
+}
+
+/* img {
+    filter: grayscale(60%);
+} */
+
+
+/* body{
+    background-image: url("../images/kmct.jpg");
+} */

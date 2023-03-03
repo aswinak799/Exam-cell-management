@@ -1,35 +1,100 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>Untitled Document</title>
-</head>
+{% extends 'admin-header.html' %}
 
-<body>
-<form action="" method="post" enctype="multipart/form-data" name="form1" id="form1">
-  <table width="383" height="192" border="1">
-    <tr>
-      <td><label>Date
-          <input type="text" name="textfield" />
-      </label></td>
-    </tr>
-    <tr>
-      <td><label>session
-        <select name="select">
-        </select>
-      </label></td>
-    </tr>
-    <tr>
-      <td><label>Upload Appearing list
-          <input type="file" name="file" />
-      </label></td>
-    </tr>
-    <tr>
-      <td><label>
-        <input type="submit" name="Submit" value="Upload" />
-      </label></td>
-    </tr>
-  </table>
-</form>
-</body>
-</html>
+{% block body %}
+<section class="vh-100 gradient-custom">
+  <div class="container py-5 h-100">
+    <div class="row justify-content-center align-items-center h-100">
+      <div class="col-12 col-lg-9 col-xl-7">
+        <div class="card shadow-2-strong card-registration" style="border-radius: 15px;">
+          <div class="card-body  p-md-5">
+            <h3 class="mb-4 pb-2 pb-md-0 mb-md-5">Upload Appearinglist</h3>
+            <form action="{% url 'seating' %}" method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+           
+              <div class="row">
+                <div class="col-md-6 mb-4">
+
+                  <div class="form-outline">
+                    <label class="form-label" for="brand">Date</label>
+                    <input type="date" id="brand" class="form-control form-control-lg" name="date" required>
+                    
+                  </div>
+
+                </div>
+                <div class="col-md-6 mb-4">
+
+                  <div class="form-group">
+                    <label for="type">Session</label>
+                  <select class="custom-select custom-select-lg" id="type" name="session" required>
+                    <option value="">Select session</option>
+                    <option value="Fornoon">Fornoon</option>
+                    <option value="Afternoon">Afternoon</option>
+                    
+                  </select>
+                </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12 mb-4">
+                  <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">Upload</span>
+                    </div>
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" name="appearing_list" id="inputGroupFile01">
+                      <label class="custom-file-label" for="inputGroupFile01">Choose file</label>
+                    </div>
+                  </div>
+              </div>
+              </div>
+              
+
+              
+
+             
+
+
+              <div class="mt-2 pt-2">
+                <input class="btn btn-primary btn-lg" type="submit" name="btn" value="upload" />
+              </div>
+              <div class="mt-2 pt-2">
+                <input class="btn btn-primary btn-lg"  name="btn"  type="submit" value="FINISH" />
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+    .btn-lg{
+        width: 100%;
+    }
+    /*.gradient-custom {
+/* fallback for old browsers */
+/*background: #e7dfe8;
+
+/* Chrome 10-25, Safari 5.1-12 */
+/*background: -webkit-linear-gradient(to bottom right, rgba(240, 147, 251, 1), rgba(245, 87, 108, 1));
+
+/* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+/*background: linear-gradient(to bottom right, rgba(240, 147, 251, 1), rgba(245, 87, 108, 1))
+}*/
+
+.card-registration .select-input.form-control[readonly]:not([disabled]) {
+font-size: 1rem;
+line-height: 2.15;
+padding-left: .75em;
+padding-right: .75em;
+}
+.card-registration .select-arrow {
+top: 13px;
+}
+
+</style>
+
+
+{% endblock %}

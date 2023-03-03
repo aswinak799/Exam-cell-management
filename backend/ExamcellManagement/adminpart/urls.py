@@ -19,6 +19,11 @@ urlpatterns = [
     path('delete_room/<int:id>',views.delete_room,name='delete_room'),
     path('change_status_inactive/<int:id>',views.change_status_to_inactive,name='change_status_inactive'),
     path('seating',views.seating,name='seating'),
+    path('select_halls',views.select_halls,name='select_halls'),
+
+
+    path('duties',views.duties,name='duties'),   
+    path('allocate_duties',views.allocate_duties,name='allocate_duties'),
 
 
 ]
