@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
 
 class login_table(models.Model):
-    username = models.CharField(max_length=90)
+    username = models.CharField(unique=True,max_length=90)
     password = models.CharField(max_length=90)
     usertype = models.CharField(max_length=20,default='staff')
     def __str__(self):

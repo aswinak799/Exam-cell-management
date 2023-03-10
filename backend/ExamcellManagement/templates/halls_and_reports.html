@@ -1,0 +1,41 @@
+{% extends 'admin-header.html' %}
+
+{% block body %}
+<style>
+    .sty{
+        transition: 2s;
+    }
+    .sty:hover{
+        transform: scale(1.09);
+        background: rgb(193, 166, 219);
+        color: deeppink;
+    }
+    h5{
+        font-weight: bold;
+    }
+</style>
+<div class="card p-3">
+    <h1 class="text-center" style="font-weight: bolder; font-size: 60px;" >Reports</h1>
+    <div class="row p-3">
+
+
+        {% for i in row %}
+
+        <div class="col-md-2 card sty  m-2">
+            <div class="card-body">
+              <h4 class="card-title">{{i.1}}</h4>
+              <h6 class="card-subtitle mb-2 text-muted">Capacity : {{i.2}}</h6>
+              <h5 class="card-subtitle mb-2 text-muted"><a href="{% url 'reports_in_hall' %}" class="card-link">View Reports</a></h5>
+              
+            </div>
+          </div>
+          {% endfor %}
+          
+
+          
+    </div>
+
+</div>
+
+
+{% endblock %}

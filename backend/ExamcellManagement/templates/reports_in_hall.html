@@ -1,0 +1,54 @@
+{% extends 'admin-header.html' %}
+
+{% block body %}
+<style>
+    .sty{
+        transition: 2s;
+    }
+    .sty:hover{
+        transform: scale(1.09);
+        background: rgb(193, 166, 219);
+        color: deeppink;
+    }
+    h5{
+        font-weight: bold;
+    }
+</style>
+<div class="card p-3">
+    <h1 class="text-center" style="font-weight: bolder; font-size: 60px;" >Hall Name</h1>
+    <div class="row p-3">
+
+
+        
+
+        <div class="col-md-3 card sty  m-2">
+            <div class="card-body">
+              <h4 class="card-title">Seating</h4>
+              <h5 class="card-subtitle mb-2 text-muted"><a href="" class="card-link">Download</a></h5>
+              
+            </div>
+          </div>
+          <div class="col-md-3 card sty  m-2">
+            <div class="card-body">
+              <h4 class="card-title">Attendance sheet</h4>
+              <h5 class="card-subtitle mb-2 text-muted"><a href="" class="card-link">Download</a></h5>
+              
+            </div>
+          </div>
+          <div class="col-md-3 card sty  m-2">
+            <div class="card-body">
+              <h4 class="card-title">Display</h4>
+              <h5 class="card-subtitle mb-2 text-muted"><a href="" class="card-link">Download</a></h5>
+              
+            </div>
+          </div>
+         
+          
+
+          
+    </div>
+
+</div>
+
+
+{% endblock %}

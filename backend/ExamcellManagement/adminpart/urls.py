@@ -25,5 +25,17 @@ urlpatterns = [
     path('duties',views.duties,name='duties'),   
     path('allocate_duties',views.allocate_duties,name='allocate_duties'),
 
+    path('generate_reports',views.generate_reports,name='generate_reports'),
+    path('halls_and_reports',views.halls_and_reports,name='halls_and_reports'),
+    path('reports_in_hall',views.reports_in_hall,name='reports_in_hall'),
+
+
+
+    # staff----app---------
+
+    path('staff_login',views.staff_login,name='staff_login'),
+
+
+
 
 ]

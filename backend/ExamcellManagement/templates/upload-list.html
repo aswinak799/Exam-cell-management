@@ -55,13 +55,18 @@
 
 
               <div class="mt-2 pt-2">
-                <input class="btn btn-primary btn-lg" type="submit" name="btn" value="upload" />
+                <input class="btn btn-primary btn-lg" type="submit" name="btn" value="UPLOAD" />
               </div>
-              <div class="mt-2 pt-2">
+              {% comment %} <div class="mt-2 pt-2">
                 <input class="btn btn-primary btn-lg"  name="btn"  type="submit" value="FINISH" />
-              </div>
+              </div> {% endcomment %}
 
             </form>
+
+            <div class="mt-2 pt-2">
+              <a href="{% url 'select_halls' %}" class="btn btn-primary btn-lg">FINISH</a>
+              
+            </div>
           </div>
         </div>
       </div>
