@@ -16,7 +16,7 @@
 
                   <div class="form-outline">
                     <label class="form-label" for="brand">Username</label>
-                    <input type="text" id="brand" value="{{user.l_id.username}}" class="form-control form-control-lg" name="username" required>
+                    <input type="text" id="brand" value="{{user.l_id.username}}" class="form-control form-control-lg" name="username" pattern="KTU-F\d{3,}" title="Please enter a valid KTU registration number" required>
                     
                   </div>
 
@@ -25,7 +25,7 @@
 
                   <div class="form-outline">
                     <label class="form-label" for="model">Name</label>
-                    <input type="text" id="model" class="form-control form-control-lg" name="name" value="{{user.name}}"  required>
+                    <input type="text" id="model" class="form-control form-control-lg" name="name" value="{{user.name}}" pattern="[A-Z][a-zA-Z\s'-]{0,49}" title="First letter must be capital"  required>
                     
                   </div>
 
@@ -72,7 +72,8 @@
                 <div class="col-md-12 mb-4">
                 <div class="form-outline">
                   <label class="form-label" for="password">Password</label>
-                  <input type="password" id="password" class="form-control form-control-lg" name="password">
+                  <input type="password" id="password" class="form-control form-control-lg" name="password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}" 
+                  title="Please enter a valid password (at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character)">
                   <input type="text" id="" value="{{user.pk}}" class="form-control form-control-lg" name="id" hidden>
                 </div>
                 </div>

@@ -116,7 +116,13 @@ to {opacity:1 ;}
               <td>{{room.hall_name}}</td>
               <td>{{room.capacity}}</td>
               
-              <td><a class="btn btn-danger btn-sm " href="{% url 'delete_room' id=room.id %}">delete</a>
+              <td>
+                {% if room.status == 'active' %}
+                <a class="btn btn-danger btn-sm " href="{% url 'delete_room' id=room.id %}">block</a>
+                {% elif room.status == 'inactive' %}
+                <a class="btn btn-success btn-sm " href="{% url 'delete_room' id=room.id %}">Unblock</a>
+
+                {% endif %}
                 <a class="btn btn-primary btn-sm " href="{% url 'edit_room' id=room.id %}">edit</a>
               </td>
             </tr>

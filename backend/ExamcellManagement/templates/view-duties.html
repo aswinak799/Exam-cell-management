@@ -5,7 +5,12 @@
 <style type="text/css">
  
   .btn{
-    border-radius: 16px;
+    border-radius: 8px;
+  }
+
+  table .btn{
+    border-radius: 8px;
+    width: 75%;
   }
   /* Popup container - can be anything you want */
 /*.popup {
@@ -85,7 +90,7 @@ to {opacity:1 ;}
        
 
         <div class="card-body">
-          <a href="{% url 'allocate_duties' %}" class="btn btn-success ml-auto mt-3">Allocate staff</a>
+          <a href="{% url 'selectDuties' %}" class="btn btn-success ml-auto mt-3">Allocate staff</a>
           <h5 class="card-title">Duties <span>| All</span></h5>
           <table class="table-borderless mt-5" id="productstable">
             <thead>
@@ -93,29 +98,28 @@ to {opacity:1 ;}
 
                 
                 <th scope="col">Slno</th>
-                <th scope="col">Staff</th>
-                <th scope="col">KTU ID</th>
                 <th scope="col">Exam</th>
-                <th scope="col">Hall</th>
                 <th scope="col">Date</th>
-                <th scope="col">options</th>
+                <th scope="col">Slot</th>
+                <th scope="col">Options</th>
+
                 
                 
               </tr>
             </thead>
             <tbody>
-             {% for staff in staffs %}
+             {% for i in allocation %}
 
              <tr>
               <td>{{forloop.counter}}</td>
-              <td>{{staff.name}}</td>
-              <td>{{staff.l_id.username}}</td>
-              <td>{{staff.dept.d_name}}</td>
-              <td>{{staff.stafftype}}</td>
-              <td>{{staff.stafftype}}</td>
+              <td>{{i.3}}</td>
+              <td>{{i.1}}</td>
+              <td>{{i.2}}</td>
+              
+
 
               <td>
-                
+                <a href="{% url 'edit_allocation' id=i.0 %}" class="btn btn-sm btn-primary">Edit</a>
               </td>
             </tr>
              

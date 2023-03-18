@@ -24,16 +24,53 @@ urlpatterns = [
 
     path('duties',views.duties,name='duties'),   
     path('allocate_duties',views.allocate_duties,name='allocate_duties'),
+    path('selectDuties',views.selectDuties,name='selectDuties'),
 
     path('generate_reports',views.generate_reports,name='generate_reports'),
     path('halls_and_reports',views.halls_and_reports,name='halls_and_reports'),
-    path('reports_in_hall',views.reports_in_hall,name='reports_in_hall'),
+    path('reports_in_hall/<int:id>',views.reports_in_hall,name='reports_in_hall'),
+    path('download_seating/<int:id>',views.download_seating,name='download_seating'),
+    path('download_attendance/<int:id>',views.download_attendance,name='download_attendance'),
+    path('display_report',views.display_report,name='display_report'),
+    path('allocate_duties_post',views.allocate_duties_post,name='allocate_duties_post'),
+    path('edit_allocation/<int:id>',views.edit_allocation,name='edit_allocation'),
+
+    path('edit_allocated_staff/',views.edit_allocated_staff,name='edit_allocated_staff'),
+    path('remove_allocated_staff/',views.remove_allocated_staff,name='remove_allocated_staff'),
+
+    path('seating_history',views.seating_history,name='seating_history'),
+    path('report_in_halls_history/<int:id>',views.report_in_halls_history,name='report_in_halls_history'),
+    path('download_seating_history/<int:id>',views.download_seating_history,name='download_seating_history'),
+    path('download_attendance_history/<int:id>',views.download_attendance_history,name='download_attendance_history'),
+    path('display_report_history',views.display_report_history,name='display_report_history'),
+
+
+    path('attendance_marking',views.attendance_marking,name='attendance_marking'),
+    path('mark_absenties/',views.mark_absenties,name='mark_absenties'),
+    path('view_attendance/',views.view_attendance,name='view_attendance'),
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
     # staff----app---------
 
     path('staff_login',views.staff_login,name='staff_login'),
+    path('get_staff',views.get_staff,name='get_staff'),
+    path('edit_staff_app',views.edit_staff_app,name='edit_staff_app'),
+
+
 
 
 

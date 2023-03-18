@@ -1,20 +1,35 @@
 import 'package:exam_cell_staff/login.dart';
+import 'package:exam_cell_staff/screens/notification.dart';
+import 'package:exam_cell_staff/screens/profile.dart';
+import 'package:exam_cell_staff/screens/report.dart';
+import 'package:exam_cell_staff/screens/widgets/bottom_navigation.dart';
+import 'package:exam_cell_staff/screens/widgets/drawer.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
+  static ValueNotifier<int> selectedIndexNotifire = ValueNotifier(0);
+  final _pages = const [
+    ProfileScreen(),
+    NotificationScreen(),
+    ReportScreen(),
+  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: const Text('HOME'),
+        title: Center(
+          child: Text(
+            'KMCT EXAM CELL',
+            style: GoogleFonts.aladin(
+              fontWeight: FontWeight.bold,
+              color: Colors.white60,
+            ),
+          ),
+        ),
         actions: [
           ElevatedButton.icon(
             onPressed: () async {
@@ -31,68 +46,15 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
       ),
+      drawer: DrawerNav(),
+      bottomNavigationBar: const BottomNavigation(),
       body: SafeArea(
-        child: Container(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 50.0,
-              ),
-              SizedBox(height: 16.0),
-              Text(
-                'Jhon',
-                style: TextStyle(
-                  fontSize: 24.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8.0),
-              Text(
-                'Software Developer',
-                style: TextStyle(
-                  fontSize: 16.0,
-                  color: Colors.grey[600],
-                ),
-              ),
-              SizedBox(height: 16.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.location_on),
-                  SizedBox(width: 8.0),
-                  Text(
-                    'New York, NY',
-                    style: TextStyle(
-                      fontSize: 16.0,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.mail),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.phone),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.person_add),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+          child: ValueListenableBuilder(
+        valueListenable: selectedIndexNotifire,
+        builder: (BuildContext context, int value, _) {
+          return _pages[value];
+        },
+      )),
     );
   }
 }

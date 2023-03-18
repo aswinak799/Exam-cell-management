@@ -1,6 +1,8 @@
 from django.shortcuts import render ,redirect
 # from rest_framework import status
 from django.http import HttpResponse ,JsonResponse
+
+from adminpart.decorators import custom_login_required
 # from django.contrib.auth import authenticate, login
 from .models import *
 from django.contrib.auth.hashers import make_password,check_password
@@ -12,12 +14,13 @@ import pandas as pd
 from django.db import connection
 # from django.db import connection
 # Create your views here.
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from reportlab.lib.pagesizes import letter, landscape
-from reportlab.lib import colors
+from reportlab.lib import colors,pagesizes
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle,Paragraph
-
+from reportlab.platypus.flowables import KeepTogether, Spacer
+from reportlab.lib.enums import TA_CENTER,TA_LEFT,TA_RIGHT
 
 def index(request):
     if 'user_type' in request.session:
@@ -53,6 +56,7 @@ def login_user(request):
 
         if is_correct and is_user_correct:
             if check_user.values()[0]['usertype'] == 'admin':
+                request.session['is_logged_in'] = True
                 request.session['user_type'] = 'admin'
                 # print(check_user.values()[0]['usertype'])
                 return redirect('home')
@@ -63,7 +67,7 @@ def login_user(request):
             request.session['login_err'] = 'Incorrect Username or Password'
             return redirect('index')
 
-
+@custom_login_required
 def home(request):
 
     if 'user_type' in request.session:
@@ -182,32 +186,38 @@ def change_status_to_inactive(request,id):
     user.save()
     return redirect('staff_list')
 
-
+@custom_login_required
 def room_list(request):
-    if 'user_type' in request.session:
-        rooms = hall.objects.all()
-        return render(request,'view-rooms.html',{'rooms':rooms})
-    else:
-        return redirect('index')
+    rooms = hall.objects.all()
+    return render(request,'view-rooms.html',{'rooms':rooms})
+    
 
-
+@custom_login_required
 def add_room(request):
     if request.POST:
         hall_name = request.POST.get('hall_name')
         capacity = request.POST.get('capacity')
+        try:
+            hall_obj = hall.objects.get(hall_name = hall_name)
+        except:
+            hall_obj = None
+        if hall_obj is not None:
+            return HttpResponse('''<script>alert("Hall already exist");window.location='add_room'</script>''')
+
         room = hall(hall_name = hall_name,capacity = capacity)
         room.save()
         print(capacity)
         return redirect('room_list')
     else:
         return render(request,'add-room.html')
-
+    
+@custom_login_required
 def edit_room(request,id):
     room = hall.objects.get(pk = id)
     print(id,'****************')
     return render(request,'edit_room.html',{'room':room})
 
-
+@custom_login_required
 def room_edit(request):
     hall_name = request.POST.get('hall_name')
     capacity = request.POST.get('capacity')
@@ -221,11 +231,16 @@ def room_edit(request):
     return redirect('room_list')
 
 
-
+@custom_login_required
 def delete_room(request,id):
 
     room = hall.objects.get(pk = id)
-    room.delete()
+    if room.status == 'active':
+        room.status = 'inactive'
+    else:
+        room.status = 'active'
+        
+    room.save()
     return redirect('room_list')
 
 
@@ -279,11 +294,11 @@ def delete_room(request,id):
 
 #         return render(request,'upload-list.html')
 
-
+@custom_login_required
 def select_halls(request):
     if request.POST:
         halls=request.POST.getlist('hall_id')
-        ob=studentDetails.objects.filter(schedule__date=request.session['date'],schedule__slot=request.session['session'])
+        ob=studentDetails.objects.filter(schedule__date=request.session['date'],schedule__slot=request.session['session']).order_by('reg_no')
         count=len(ob)
         sublist=[]
         for i in ob:
@@ -392,7 +407,7 @@ def select_halls(request):
                             print(len(students),"==",countlist[index],"=====",minindex.count)
                             ob_c_stud=students[countlist[index]-minindex.count]
                         
-                            row=[ob_c_stud,(2*ii)+1]
+                            row=[ob_c_stud,(2*ii)+2]
                             halldetails.append(row)
                             minindex.count=minindex.count-1;
                             minindex.save()
@@ -433,14 +448,17 @@ def select_halls(request):
         try:
             ob=studentDetails.objects.filter(schedule__date=request.session['date'],schedule__slot=request.session['session'])
             count=len(ob)   
-            halls = hall.objects.all()
+            halls = hall.objects.filter(status = 'active')
+            if count == 0:
+                return HttpResponse('''<script>alert("There is no students to allocate");window.location='seating'</script>''')
             
             return render(request,'hall-allocation.html',{'halls':halls,"count":count})
         except:
-            return HttpResponse('Something wrong')
+            return HttpResponse('''<script>alert("There is no students to allocate");window.location='seating'</script>''')
 
 
-
+# available halls and reports
+@custom_login_required
 def halls_and_reports(request):
     with connection.cursor() as cursor:
       
@@ -457,8 +475,239 @@ def halls_and_reports(request):
     
     return render(request,'halls_and_reports.html',{'row':row})
 
-def reports_in_hall(request):
-    return render(request,'reports_in_hall.html')
+
+@custom_login_required
+def display_report(request):
+    with connection.cursor() as cursor:
+      
+        cursor.execute("select * from adminpart_hall where id in(select hall_id_id from adminpart_schedule_details where shedule_id_id="+str(request.session['schedule'])+")")
+        row = cursor.fetchall()
+    
+
+    
+        result=[]
+        for i in row:
+            cr={"hname":i[1],"det":[]}
+            qry="select distinct subject_id_id from adminpart_schedule_details where shedule_id_id="+str(request.session['schedule'])+" and hall_id_id="+str(i[0])
+            cursor.execute(qry)
+            subrow=cursor.fetchall()
+            for sid in subrow:
+                ob=subject.objects.get(id=sid[0])
+                sr={"branch":ob.branch,"regno":[],"count":0}
+                ob1=schedule_details.objects.filter(hall_id__id=i[0],shedule_id__id=request.session['schedule'],subject_id__id=sid[0]).order_by()
+                sr['count']=len(ob1)
+                for reg in ob1:
+                    sr['regno'].append(reg.reg_no)
+                cr['det'].append(sr)
+            result.append(cr)
+        print(result)
+        examname = schedule.objects.get(id = request.session['schedule'])
+        return render(request,'display.html',{'result':result,'exam':examname})
+
+        
+
+
+
+@custom_login_required
+def reports_in_hall(request,id):
+    hall_name = hall.objects.get(pk = id)
+    print(hall_name.hall_name)
+    return render(request,'reports_in_hall.html',{'hall_id':id,'hall':hall_name})
+
+def download_seating(request,id):
+    # print(id,"==========================\n=================\n=====================")
+    # Query the database to get the student data
+    students = schedule_details.objects.filter(shedule_id__date = request.session['date'],shedule_id__slot = request.session['session'],hall_id = id)
+    hall_name = students[0].hall_id.hall_name
+    schedule_name = schedule.objects.get(slot = request.session['session'],date = request.session['date'])
+    # Build the table data
+    table_data = [['Seat', 'Reg_no', 'Name', 'Code', 'Remark']]
+    head_data = [['Room :',hall_name,request.session['session'],request.session['date']]]
+    for student in students:
+        table_data.append([student.seat_no, student.reg_no, student.student,student.subject_id.code,])
+        
+        
+    # Set up the PDF document
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="seating_"'+hall_name+'".pdf"'
+    doc = SimpleDocTemplate(response, pagesize=letter)
+
+    # Define styles
+    # styles = getSampleStyleSheet()
+    # heading_style = styles['Heading1']
+    # heading_style.alignment = 1 # center alignment
+    # date_style = styles['Normal']
+    # date_style.fontSize = 12
+    heading_style = ParagraphStyle(
+            
+        name='heading',
+        fontName='Helvetica-Bold',
+        fontSize=18,
+        leading=16,
+        alignment=TA_CENTER
+        )
+    
+
+
+    # Create heading and date
+    heading = Paragraph("KMCT College of Engineering", heading_style)
+    heading1 =Paragraph(schedule_name.exam_name, heading_style)
+    heading2 = Paragraph("SEATING ARRANGEMENT", heading_style)
+    # date = Paragraph("Date: {}".format(request.session['date']), date_style)
+
+    # Create the table and apply styles
+    head_data_table = Table(head_data,colWidths=[1.0*inch, 2.0*inch, 3.0*inch, 1.8*inch])
+    table = Table(table_data, colWidths=[1.0*inch, 1.7*inch, 2.8*inch,1*inch, 1.5*inch])
+    style = TableStyle([
+        # ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 14),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        # ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+        ('TEXTCOLOR', (0,1), (-1,-1), colors.black),
+        ('ALIGN', (0,1), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,1), (-1,-1), 10),
+        ('BOTTOMPADDING', (0,1), (-1,-1), 6),
+        ('GRID', (0,0), (-1,-1), 1, colors.black)
+    ])
+    head_style = TableStyle([
+        # ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 14),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        # ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+        # ('TEXTCOLOR', (0,1), (-1,-1), colors.black),
+        # ('ALIGN', (0,1), (-1,-1), 'CENTER'),
+        # ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+        # ('FONTSIZE', (0,1), (-1,-1), 10),
+        # ('BOTTOMPADDING', (0,1), (-1,-1), 6),
+        # ('GRID', (0,0), (-1,-1), 1, colors.black)
+    ])
+
+
+    table.setStyle(style)
+    head_data_table.setStyle(head_style)
+    # hall_name_para = Paragraph(hall_name, hall_style)
+    # hall_name_spacer = Spacer(1, 0.2*inch)
+    heading_spacer = Spacer(1, 0.25*inch)
+    # date_spacer = Spacer(1, 0.25*inch)
+      
+    # Add the heading, date, and table to the PDF document and save it
+    # elements = [heading,heading1,heading2, date, table]
+    elements = [
+    heading,
+    heading_spacer,
+    heading1,
+    heading_spacer,
+    heading_spacer,
+    heading2,
+    heading_spacer,
+    head_data_table,
+    table,
+    ]
+
+    doc.build(elements)
+
+    return response
+
+def download_attendance(request,id):
+    students = schedule_details.objects.filter(shedule_id__date = request.session['date'],shedule_id__slot = request.session['session'],hall_id = id)
+    hall_name = students[0].hall_id.hall_name
+    schedule_name = schedule.objects.get(slot = request.session['session'],date = request.session['date'])
+    # Build the table data
+    table_data = [['slno', 'Name and Reg_no', 'Course Code', 'Barcode', 'Signature']]
+    head_data = [['Room :',hall_name,request.session['session'],request.session['date']]]
+    for student in students:
+        table_data.append(["\n\n"+str(student.seat_no)+"\n\n", "\n\n"+str(student.student+"-"+student.reg_no)+"\n\n","\n\n"+str(student.subject_id.code)+'\n\n',])
+        
+        
+    # Set up the PDF document
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Attendance_"'+hall_name+'".pdf"'
+    doc = SimpleDocTemplate(response, pagesize=pagesizes.A4)
+
+    # Define styles
+    # styles = getSampleStyleSheet()
+    # heading_style = styles['Heading1']
+    # heading_style.alignment = 1 # center alignment
+    # date_style = styles['Normal']
+    # date_style.fontSize = 12
+    heading_style = ParagraphStyle(
+            
+        name='heading',
+        fontName='Helvetica-Bold',
+        fontSize=18,
+        leading=16,
+        alignment=TA_CENTER
+        )
+    
+
+
+    # Create heading and date
+    heading = Paragraph("KMCT College of Engineering", heading_style)
+    heading1 =Paragraph(schedule_name.exam_name, heading_style)
+    
+    # date = Paragraph("Date: {}".format(request.session['date']), date_style)
+
+    # Create the table and apply styles
+    head_data_table = Table(head_data,colWidths=[1.0*inch, 2.0*inch, 3.0*inch, 1.8*inch])
+    table = Table(table_data, colWidths=[0.5*inch, 2.7*inch, 1.1*inch,2.4*inch, 1.3*inch])
+    
+    style = TableStyle([
+        # ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 11),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        # ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+        ('TEXTCOLOR', (0,1), (-1,-1), colors.black),
+        ('ALIGN', (0,1), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,1), (-1,-1), 9),
+        ('BOTTOMPADDING', (0,1), (-1,-1), 6),
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ('ROWHEIGHT', (0,1), (-1,1), 0.9*inch),
+
+    ])
+    head_style = TableStyle([
+        # ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 14),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        
+    ])
+   
+
+    table.setStyle(style)
+
+    head_data_table.setStyle(head_style)
+    # hall_name_para = Paragraph(hall_name, hall_style)
+    # hall_name_spacer = Spacer(1, 0.2*inch)
+    heading_spacer = Spacer(1, 0.25*inch)
+    # date_spacer = Spacer(1, 0.25*inch)
+      
+    # Add the heading, date, and table to the PDF document and save it
+    # elements = [heading,heading1,heading2, date, table]
+    elements = [
+    heading,
+    heading_spacer,
+    heading1,
+    heading_spacer,
+    heading_spacer,
+    head_data_table,
+    table,
+    ]
+
+    doc.build(elements)
+    return response
 
 
 def generate_reports(request):
@@ -519,7 +768,7 @@ def generate_reports(request):
 
 
 
-
+@custom_login_required
 def seating(request):
     
     if request.POST:
@@ -590,14 +839,457 @@ def seating(request):
 
         return render(request,'upload-list.html')
 
-
+@custom_login_required
 def duties(request):
-    return render(request,'view-duties.html')
+    with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where  id in (SELECT schedule_id from adminpart_staff_allocation);")
+            row = cursor.fetchall()
+            print(row)
+    return render(request,'view-duties.html',{'allocation':row})
+
+@custom_login_required
+def selectDuties(request):
+    if request.POST:
+        request.session['duty_schedule_id'] = request.POST.get('schedule')
+        return redirect('allocate_duties')
+    else:
+        with connection.cursor() as cursor:
+        
+            cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where date >=curdate() and id not in (SELECT schedule_id from adminpart_staff_allocation);")
+            row = cursor.fetchall()
+            print(row)
+        return render(request,'select_duties_form.html',{'rows':row})
 
 
+
+
+@custom_login_required
 def allocate_duties(request):
-    return render(request,'Allocate-Duties.html')
+    aloclist=[]
+    with connection.cursor() as cursor:
+      
+        cursor.execute("select * from adminpart_hall where id in(select hall_id_id from adminpart_schedule_details where shedule_id_id="+str(request.session['duty_schedule_id'])+")")
+        row = cursor.fetchall()
+        
 
+        examcell_staff = staff.objects.exclude(stafftype='invigilator')
+        cursor.execute("SELECT * FROM adminpart_staff where stafftype='Invigilator' and id not in (select staff_id_id from adminpart_staff_allocation) limit "+str(len(row))+";")
+        no_work_done = cursor.fetchall()
+        # print(no_work_done,len(row))
+
+        if len(no_work_done) == 0:
+            cursor.execute("SELECT adminpart_staff.*,count(*) as c from adminpart_staff join adminpart_staff_allocation on adminpart_staff_allocation.staff_id_id=adminpart_staff.id where stafftype='Invigilator' group by adminpart_staff.id order by c limit "+str(len(row))+";")
+            work =cursor.fetchall()
+            for i in range(len(row)):
+                aloclist.append(work[i])
+
+        else:
+            for i in no_work_done:
+                aloclist.append(i)
+
+            if len(aloclist)<len(row):
+                cursor.execute("SELECT adminpart_staff.*,count(*) as c from adminpart_staff join adminpart_staff_allocation on adminpart_staff_allocation.staff_id_id=adminpart_staff.id where stafftype='Invigilator' group by adminpart_staff.id order by c limit "+str(len(row)-len(aloclist))+";")
+                work =cursor.fetchall()
+                for i in work:
+                    aloclist.append(i)
+    print("=====================")
+    # print(aloclist)
+    invigilators =[]
+    for i in range(len(row)):
+        cr = {}
+        cr['hall'] = row[i]
+        cr['invigilator'] = aloclist[i]
+        invigilators.append(cr)
+
+
+    print(invigilators)
+    print("=====================")
+    print(len(invigilators))
+
+    print("=====================")
+
+
+        
+
+    return render(request,'Allocate-Duties.html',{'rows':row,'examcell':examcell_staff,'invigilators':invigilators})
+
+
+
+@custom_login_required
+def allocate_duties_post(request):
+    if request.POST:
+        schedule_id = request.session['duty_schedule_id']
+        halls = request.POST.getlist('hall_id')
+        staff_id_s = request.POST.getlist('staff_id')
+        exam_cell_staff = request.POST.getlist('examcell')
+
+        for i in range(len(halls)):
+            # user_login = login_table(username = username,password = hashed_password)
+            alloction_obj = staff_allocation(staff_id = staff.objects.get(id = staff_id_s[i]),hall_id = hall.objects.get(id = halls[i]),schedule = schedule.objects.get(id = schedule_id))
+            alloction_obj.save()
+        
+        for i in exam_cell_staff:
+            exam_alloction_obj = staff_allocation(staff_id = staff.objects.get(id = i),schedule = schedule.objects.get(id = schedule_id))
+            exam_alloction_obj.save()
+
+
+
+        print(schedule_id)
+        print("Hall id ==>",halls,"\n Staff_id ==>",staff_id_s,"\n Exam cell id ==>",exam_cell_staff)
+
+        return HttpResponse('''<script>alert("Successfully allocated");window.location='duties'</script>''')
+
+@custom_login_required
+def edit_allocation(request,id):
+    print(id)
+    request.session['sch_id'] = id
+    allocated_staffs = staff_allocation.objects.filter(schedule__id = id)
+    print(len(allocated_staffs))
+   
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * from adminpart_staff where stafftype='Invigilator' and id not in (select staff_id_id from adminpart_staff_allocation where schedule_id = "+str(id)+");")
+        row = cursor.fetchall()
+    print(row)
+    return render(request,'edit_allocation.html',{'allocation':allocated_staffs,'exam':allocated_staffs[0].schedule.exam_name,'staffs':row})
+
+#edit allocated staff
+#================================
+@custom_login_required
+def edit_allocated_staff(request):
+    if request.method == 'GET':
+        alloc_id = request.GET.get('alloc_id',None)
+        staff_id = request.GET.get('staff_id',None)
+        try:
+            alloc_obj = staff_allocation.objects.get(id=alloc_id)
+        except:
+            alloc_obj = None
+        
+        if alloc_obj is not None:
+            alloc_obj.staff_id = staff.objects.get(id = staff_id)
+            alloc_obj.save()
+            return JsonResponse({'message': 'Successfully Edited'})
+        else:
+             return JsonResponse({'message': 'Something wrong !!!'},status=401)
+        
+@custom_login_required
+def remove_allocated_staff(req):
+    if req.method == 'GET':
+
+        alloc_id = req.GET.get('alloc_id',None)
+        try:
+            alloc_obj = staff_allocation.objects.get(id = alloc_id)
+        except:
+            alloc_obj = None
+        if alloc_obj is not None:
+            alloc_obj.delete()
+            return JsonResponse({'message': 'Successfully Deleted '})
+        else:
+            return JsonResponse({'message': ' Deletion Faild '})
+
+
+
+#seating history
+#================
+@custom_login_required
+def seating_history(request):
+    if request.POST:
+        schedule_id = request.POST.get('schedule')
+        request.session['schedule_id_history'] = schedule_id
+        with connection.cursor() as cursor:
+            cursor.execute("select * from adminpart_hall where id in(select hall_id_id from adminpart_schedule_details where shedule_id_id="+str(schedule_id)+")")
+            row = cursor.fetchall()
+        return render(request,'halls_and_reports_history.html',{'row':row})
+
+    with connection.cursor() as cursor:
+            # cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where date >=curdate() and id not in (SELECT schedule_id from adminpart_staff_allocation);")
+            cursor.execute("SELECT * FROM exam_cell.adminpart_schedule;")
+            row = cursor.fetchall()
+            print(row)
+
+    return render(request,'select_schedule_to_seating.html',{'rows':row})
+
+@custom_login_required
+def report_in_halls_history(request,id):
+    hall_name = hall.objects.get(pk = id)
+    print(hall_name.hall_name)
+    return render(request,'reports_in_hall_history.html',{'hall_id':id,'hall':hall_name})
+
+
+def download_seating_history(request,id):
+    # print(id,"==========================\n=================\n=====================")
+    # Query the database to get the student data
+    students = schedule_details.objects.filter(shedule_id__id = request.session['schedule_id_history'],hall_id = id)
+    hall_name = students[0].hall_id.hall_name
+    schedule_name = schedule.objects.get(id = request.session['schedule_id_history'])
+    # Build the table data
+    table_data = [['Seat', 'Reg_no', 'Name', 'Code', 'Remark']]
+    head_data = [['Room :',hall_name,schedule_name.slot,schedule_name.date]]
+    for student in students:
+        table_data.append([student.seat_no, student.reg_no, student.student,student.subject_id.code,])
+        
+        
+    # Set up the PDF document
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="seating_"'+hall_name+'".pdf"'
+    doc = SimpleDocTemplate(response, pagesize=letter)
+
+    # Define styles
+    # styles = getSampleStyleSheet()
+    # heading_style = styles['Heading1']
+    # heading_style.alignment = 1 # center alignment
+    # date_style = styles['Normal']
+    # date_style.fontSize = 12
+    heading_style = ParagraphStyle(
+            
+        name='heading',
+        fontName='Helvetica-Bold',
+        fontSize=18,
+        leading=16,
+        alignment=TA_CENTER
+        )
+    
+
+
+    # Create heading and date
+    heading = Paragraph("KMCT College of Engineering", heading_style)
+    heading1 =Paragraph(schedule_name.exam_name, heading_style)
+    heading2 = Paragraph("SEATING ARRANGEMENT", heading_style)
+    # date = Paragraph("Date: {}".format(request.session['date']), date_style)
+
+    # Create the table and apply styles
+    head_data_table = Table(head_data,colWidths=[1.0*inch, 2.0*inch, 3.0*inch, 1.8*inch])
+    table = Table(table_data, colWidths=[1.0*inch, 1.7*inch, 2.8*inch,1*inch, 1.5*inch])
+    style = TableStyle([
+        # ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 14),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        # ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+        ('TEXTCOLOR', (0,1), (-1,-1), colors.black),
+        ('ALIGN', (0,1), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,1), (-1,-1), 10),
+        ('BOTTOMPADDING', (0,1), (-1,-1), 6),
+        ('GRID', (0,0), (-1,-1), 1, colors.black)
+    ])
+    head_style = TableStyle([
+        # ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 14),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        # ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+        # ('TEXTCOLOR', (0,1), (-1,-1), colors.black),
+        # ('ALIGN', (0,1), (-1,-1), 'CENTER'),
+        # ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+        # ('FONTSIZE', (0,1), (-1,-1), 10),
+        # ('BOTTOMPADDING', (0,1), (-1,-1), 6),
+        # ('GRID', (0,0), (-1,-1), 1, colors.black)
+    ])
+
+
+    table.setStyle(style)
+    head_data_table.setStyle(head_style)
+    # hall_name_para = Paragraph(hall_name, hall_style)
+    # hall_name_spacer = Spacer(1, 0.2*inch)
+    heading_spacer = Spacer(1, 0.25*inch)
+    # date_spacer = Spacer(1, 0.25*inch)
+      
+    # Add the heading, date, and table to the PDF document and save it
+    # elements = [heading,heading1,heading2, date, table]
+    elements = [
+    heading,
+    heading_spacer,
+    heading1,
+    heading_spacer,
+    heading_spacer,
+    heading2,
+    heading_spacer,
+    head_data_table,
+    table,
+    ]
+
+    doc.build(elements)
+
+    return response
+
+def download_attendance_history(request,id):
+    students = schedule_details.objects.filter(shedule_id__id = request.session['schedule_id_history'],hall_id = id)
+    hall_name = students[0].hall_id.hall_name
+    schedule_name = schedule.objects.get(id = request.session['schedule_id_history'])
+    # Build the table data
+    table_data = [['slno', 'Name and Reg_no', 'Course Code', 'Barcode', 'Signature']]
+    head_data = [['Room :',hall_name,schedule_name.slot,schedule_name.date]]
+    for student in students:
+        table_data.append(["\n\n"+str(student.seat_no)+"\n\n", "\n\n"+str(student.student+"-"+student.reg_no)+"\n\n","\n\n"+str(student.subject_id.code)+'\n\n',])
+        
+        
+    # Set up the PDF document
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Attendance_"'+hall_name+'".pdf"'
+    doc = SimpleDocTemplate(response, pagesize=pagesizes.A4)
+
+    # Define styles
+    # styles = getSampleStyleSheet()
+    # heading_style = styles['Heading1']
+    # heading_style.alignment = 1 # center alignment
+    # date_style = styles['Normal']
+    # date_style.fontSize = 12
+    heading_style = ParagraphStyle(
+            
+        name='heading',
+        fontName='Helvetica-Bold',
+        fontSize=18,
+        leading=16,
+        alignment=TA_CENTER
+        )
+    
+
+
+    # Create heading and date
+    heading = Paragraph("KMCT College of Engineering", heading_style)
+    heading1 =Paragraph(schedule_name.exam_name, heading_style)
+    
+    # date = Paragraph("Date: {}".format(request.session['date']), date_style)
+
+    # Create the table and apply styles
+    head_data_table = Table(head_data,colWidths=[1.0*inch, 2.0*inch, 3.0*inch, 1.8*inch])
+    table = Table(table_data, colWidths=[0.5*inch, 2.7*inch, 1.1*inch,2.4*inch, 1.3*inch])
+    
+    style = TableStyle([
+        # ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 11),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        # ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+        ('TEXTCOLOR', (0,1), (-1,-1), colors.black),
+        ('ALIGN', (0,1), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,1), (-1,-1), 9),
+        ('BOTTOMPADDING', (0,1), (-1,-1), 6),
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ('ROWHEIGHT', (0,1), (-1,1), 0.9*inch),
+
+    ])
+    head_style = TableStyle([
+        # ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 14),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        
+    ])
+   
+
+    table.setStyle(style)
+
+    head_data_table.setStyle(head_style)
+    # hall_name_para = Paragraph(hall_name, hall_style)
+    # hall_name_spacer = Spacer(1, 0.2*inch)
+    heading_spacer = Spacer(1, 0.25*inch)
+    # date_spacer = Spacer(1, 0.25*inch)
+      
+    # Add the heading, date, and table to the PDF document and save it
+    # elements = [heading,heading1,heading2, date, table]
+    elements = [
+    heading,
+    heading_spacer,
+    heading1,
+    heading_spacer,
+    heading_spacer,
+    head_data_table,
+    table,
+    ]
+
+    doc.build(elements)
+    return response
+
+@custom_login_required
+def display_report_history(request):
+    with connection.cursor() as cursor:
+      
+        cursor.execute("select * from adminpart_hall where id in(select hall_id_id from adminpart_schedule_details where shedule_id_id="+str(request.session['schedule_id_history'])+")")
+        row = cursor.fetchall()
+    
+
+    
+        result=[]
+        for i in row:
+            cr={"hname":i[1],"det":[]}
+            qry="select distinct subject_id_id from adminpart_schedule_details where shedule_id_id="+str(request.session['schedule_id_history'])+" and hall_id_id="+str(i[0])
+            cursor.execute(qry)
+            subrow=cursor.fetchall()
+            for sid in subrow:
+                ob=subject.objects.get(id=sid[0])
+                sr={"branch":ob.branch,"regno":[],"count":0}
+                ob1=schedule_details.objects.filter(hall_id__id=i[0],shedule_id__id=request.session['schedule_id_history'],subject_id__id=sid[0]).order_by()
+                sr['count']=len(ob1)
+                for reg in ob1:
+                    sr['regno'].append(reg.reg_no)
+                cr['det'].append(sr)
+            result.append(cr)
+        print(result)
+        examname = schedule.objects.get(id = request.session['schedule_id_history'])
+        return render(request,'display.html',{'result':result,'exam':examname})
+    
+@custom_login_required
+def attendance_marking(request):
+    if request.POST:
+        schedule_id = request.POST.get('schedule')
+        schedule_students = schedule_details.objects.filter(shedule_id = schedule_id)
+        studList = []
+
+
+        print(len(studList))
+        return render(request,'student_list.html',{'students':schedule_students})
+    with connection.cursor() as cursor:
+            # cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where date >=curdate() and id not in (SELECT schedule_id from adminpart_staff_allocation);")
+            cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where date <= curdate();")
+            row = cursor.fetchall()
+            print(row)
+
+    return render(request,'select_exam_to_attendance.html',{'rows':row})
+
+
+@custom_login_required
+def mark_absenties(request):
+    print('its mark absent ********************')
+    sd_id = request.GET.get('sd_id')
+    try:
+        student = schedule_details.objects.get(id = sd_id)
+    except:
+
+        student = None
+    if student is not None:
+        student.attendance_status = 0
+        student.save()
+        return JsonResponse({"message":"Absent Marked Successfull"})
+
+
+
+    return HttpResponse(id)
+
+#view attendance based on exam
+@custom_login_required
+def view_attendance(request):
+
+    if request.POST:
+        schedule_id = request.POST.get('schedule')
+        schedule_students = schedule_details.objects.filter(shedule_id = schedule_id)
+        return render(request,'view_stud_attandance.html',{'students':schedule_students})
+    with connection.cursor() as cursor:
+            # cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where date >=curdate() and id not in (SELECT schedule_id from adminpart_staff_allocation);")
+            cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where date <= curdate();")
+            row = cursor.fetchall()
+            # print(row)
+
+    return render(request,'attendance_form_stud.html',{'rows':row})
 
 
 
@@ -626,3 +1318,52 @@ def staff_login(request):
             return JsonResponse({'success': False, 'message': 'Invalid credentials'},status=401)
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+
+
+@csrf_exempt
+def get_staff(request):
+    if request.method == 'POST':
+        staff_id = request.POST.get('id')
+        
+        
+        try:
+            staff_obj = staff.objects.get(id = staff_id)
+        except:
+            staff_obj = None
+
+
+        if staff_obj is not None :
+            print(staff_obj.name,"///////////************////////////*********")
+            
+            return JsonResponse({'name':staff_obj.name,'id':staff_obj.pk,'type':staff_obj.stafftype,'dept':staff_obj.dept.d_name,'ktu_id':staff_obj.l_id.username})
+        else:
+            return JsonResponse({'message': 'Invalid credentials'},status=401)
+    else:
+        return JsonResponse({'message': 'Invalid request method'},status = 401)
+
+
+
+@csrf_exempt
+def edit_staff_app(request):
+    if request.method == 'POST':
+        staff_id = request.POST.get('id')
+        name = request.POST.get('name')
+        
+        
+        try:
+            staff_obj = staff.objects.get(id = staff_id)
+            staff_obj.name = name
+            staff_obj.save()
+        except:
+            staff_obj = None
+
+
+        if staff_obj is not None :
+            print(staff_obj.name,"///////////************////////////*********")
+            
+            return JsonResponse({'name':staff_obj.name,'id':staff_obj.pk,'type':staff_obj.stafftype,'dept':staff_obj.dept.d_name,'ktu_id':staff_obj.l_id.username})
+        else:
+            return JsonResponse({'message': 'Invalid credentials'},status=401)
+    else:
+        return JsonResponse({'message': 'Invalid request method'},status = 401)

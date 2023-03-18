@@ -1,68 +1,44 @@
 {% extends 'admin-header.html' %}
 
 {% block body %}
-<section class="vh-100 gradient-custom">
-  <div class="container  h-100">
-    <div class="row justify-content-center align-items-center h-100">
-      <div class="col-12 col-lg-9 col-xl-7">
+
+
+<section class="vh-100 gradient-custom" >
+  <div class="h-100">
+    <div class="row justify-content-center align-items-center ">
+      <div class="col-12 p-5">
         <div class="card shadow-2-strong card-registration" style="border-radius: 15px;">
           <div class="card-body p-4 p-md-5">
-            <h3 class="mb-4 pb-2 pb-md-0 mb-md-5">Allocate Duty</h3>
-            <form action="{% url 'add_staff' %}" method="post">
-              {% csrf_token %}
+
+            
+              <form action="{% url 'allocate_duties_post' %}" method="post">
+                {% csrf_token %}
+              <div > 
+            <h3 class="mb-4 pb-2 pb-md-0 mb-md-5">INVIGILATOR</h3>
+            
            
-              <div class="row">
-                <div class="col-md-6 mb-4">
-
-                  <div class="form-outline">
-                    <label class="form-label" for="brand">Date</label>
-                    <input type="date" id="brand" class="form-control form-control-lg" name="date" required>
-                    
-                  </div>
-
-                </div>
-                <div class="col-md-6 mb-4">
-
-                  <div class="form-group">
-                    <label for="type">Exam</label>
-                  <select class="custom-select custom-select-lg" id="type" name="staff_type" required>
-                    <option value="">Select Exam</option>
-                    <option value="cheef">Cheef</option>
-                    <option value="invigilator">Invigilator</option>
-                    
-                    
-                  </select>
-                </div>
-                </div>
-              </div>
-
               
 
+              
+{% for i in invigilators %}
               <div class="row">
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6 ">
 
                   <div class="form-group">
-                    <label for="type">Staff</label>
-                  <select class="custom-select custom-select-lg" id="type" name="exam" required>
-                    <option value="">Select staff</option>
-                    <option value="cheef">Cheef</option>
-                    <option value="invigilator">Invigilator</option>
-                    
-                    
-                  </select>
+                    <div class="form-outline">
+                      <input type="text" id="model" class="form-control form-control-lg" value="{{i.invigilator.1}}"  disabled>
+                      <input class="form-check-input" type="checkbox" value="{{i.invigilator.0}}" name="staff_id"  hidden checked>
+                      
+                      
+                    </div>
+                  
                 </div>
                 </div>
- <div class="col-md-6 mb-4 pb-2">
+                <div class="col-md-6  ">
 
                   <div class="form-outline">
-                    <label class="type" for="Segment">Hall</label>
-                    <select class="custom-select custom-select-lg" id="Segment" name="dept" required>
-                    <option value="">Select Hall</option>
-                    {% for dept in depts %}
-                    <option value="{{dept.id}}">{{dept.d_name}}</option>
-                    {% endfor %}
-                    
-                  </select>
+                    <input type="text" id="model" class="form-control form-control-lg" value="{{i.hall.1}}"  disabled>
+                    <input class="form-check-input" type="checkbox" value="{{i.hall.0}}" name="hall_id"  hidden checked>
                     
                     
                   </div>
@@ -73,21 +49,72 @@
               </div>
               
               
-
+      {% endfor %}
              
+           
+          </div>
 
+
+
+          <div > 
+            <h3 class="mb-4 pb-2 pb-md-0 mb-md-5 mt-4">EXAM CELL STAFF</h3>
+            
+           
+              <table class=" mt-5" style="width: 100%;" id="productstable">
+               <thead>
+                  <tr style="justify-content: space-around;">
+    
+                    
+                    
+                    <th scope="col">Staff Name</th>
+                    <th scope="col">Dept</th>
+                    <th scope="col">Staff Type</th>
+                    <th scope="col">select</th>
+                   
+                    
+                    
+                  </tr>
+                </thead>
+                <tbody>
+                
+                  {% for staff in examcell %}
+                 <tr>
+                  <td>{{staff.name}}</td>
+                  <td>{{staff.dept}}</td>
+                  <td>{{staff.stafftype}}</td>
+                  <td><div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="{{staff.id}}" name="examcell"  id="{{staff.id}}" checked>
+                    <label class="form-check-label" for="{{staff.id}}">
+                      select here ...
+                    </label>
+                  </div></td>
+                  </tr>
+                  {% endfor %}
+    
+                  
+    
+                </tbody>
+
+              </table>
+              
+
+              </div>
 
               <div class="mt-2 pt-2">
                 <input class="btn btn-primary btn-lg" type="submit" value="Allocate" />
               </div>
 
             </form>
+          
+
+          </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </section>
+
 
 <style>
     .btn-lg{
@@ -107,8 +134,6 @@
 .card-registration .select-input.form-control[readonly]:not([disabled]) {
 font-size: 1rem;
 line-height: 2.15;
-padding-left: .75em;
-padding-right: .75em;
 }
 .card-registration .select-arrow {
 top: 13px;

@@ -522,11 +522,24 @@
         </a>
       </li>
       <li class="nav-item mt-3">
-        <a class="nav-link " href="/admin/all-users">
-          <i class="bi bi-table"></i>
-          <span>Staff attendance</span>
+        <a class="nav-link " href="{% url 'seating_history' %}">
+          <i class="bi bi-clock-history"></i>
+          <span>Seating History</span>
         </a>
       </li>
+      <li class="nav-item mt-3">
+        <a class="nav-link " href="{% url 'attendance_marking' %}">
+          <i class="bi bi-table"></i>
+          <span>Attendance Marking</span>
+        </a>
+      </li>
+      <li class="nav-item mt-3">
+        <a class="nav-link " href="{% url 'view_attendance' %}">
+          <i class="bi bi-table"></i>
+          <span>View Attendance</span>
+        </a>
+      </li>
+
       <li class="nav-item mt-3">
         <a class="nav-link " href="/admin/feedback">
           <i class="bi bi-chat-left-fill"></i>

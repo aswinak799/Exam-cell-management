@@ -25,11 +25,19 @@
             <div class="card-body">
               <h4 class="card-title">{{i.1}}</h4>
               <h6 class="card-subtitle mb-2 text-muted">Capacity : {{i.2}}</h6>
-              <h5 class="card-subtitle mb-2 text-muted"><a href="{% url 'reports_in_hall' %}" class="card-link">View Reports</a></h5>
+              <h5 class="card-subtitle mb-2 text-muted"><a href="{% url 'reports_in_hall' id=i.0 %}" class="card-link">View Reports</a></h5>
               
             </div>
           </div>
           {% endfor %}
+
+          <div class="col-md-2 card sty  m-2">
+            <div class="card-body">
+              <h4 class="card-title">Display</h4>
+              <h5 class="card-subtitle mb-2 text-muted"><a href="{% url 'display_report' %}" class="card-link">View Report</a></h5>
+              
+            </div>
+          </div>
           
 
           

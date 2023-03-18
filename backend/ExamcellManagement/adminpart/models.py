@@ -25,19 +25,18 @@ class staff(models.Model):
 class hall(models.Model):
     hall_name = models.CharField(max_length=10)
     capacity = models.IntegerField()
-
-
-class staff_allocation(models.Model):
-     staff_id = models.ForeignKey(staff,on_delete=models.CASCADE)
-     hall_id = models.ForeignKey(hall,on_delete=models.CASCADE)
-     date = models.DateField()
-
+    status = models.CharField(max_length=10,default='active')
 
 class schedule(models.Model):
     date = models.DateField()
     slot = models.CharField(max_length=25)
     exam_name = models.CharField(max_length=150)
 
+class staff_allocation(models.Model):
+     staff_id = models.ForeignKey(staff,on_delete=models.CASCADE)
+     hall_id = models.ForeignKey(hall,blank=True, null=True, on_delete=models.SET_NULL)
+     schedule = models.ForeignKey(schedule,on_delete=models.CASCADE)
+     date = models.DateField(auto_now_add=True)
 
 class subject(models.Model):
     code = models.CharField(max_length=20)
@@ -65,6 +64,7 @@ class schedule_details(models.Model):
     student = models.CharField(max_length=100)
     subject_id = models.ForeignKey(subject,on_delete=models.CASCADE)
     seat_no = models.IntegerField()
+    attendance_status = models.IntegerField(default=1)
 
 class staff_Attendance(models.Model):
     staff_id = models.ForeignKey(staff,on_delete=models.CASCADE)

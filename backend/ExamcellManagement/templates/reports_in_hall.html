@@ -15,7 +15,7 @@
     }
 </style>
 <div class="card p-3">
-    <h1 class="text-center" style="font-weight: bolder; font-size: 60px;" >Hall Name</h1>
+    <h1 class="text-center" style="font-weight: bolder; font-size: 60px;" >{{hall.hall_name}}</h1>
     <div class="row p-3">
 
 
@@ -24,24 +24,18 @@
         <div class="col-md-3 card sty  m-2">
             <div class="card-body">
               <h4 class="card-title">Seating</h4>
-              <h5 class="card-subtitle mb-2 text-muted"><a href="" class="card-link">Download</a></h5>
+              <h5 class="card-subtitle mb-2 text-muted"><a href="{% url 'download_seating' id=hall_id %}" class="card-link">Download</a></h5>
               
             </div>
           </div>
           <div class="col-md-3 card sty  m-2">
             <div class="card-body">
               <h4 class="card-title">Attendance sheet</h4>
-              <h5 class="card-subtitle mb-2 text-muted"><a href="" class="card-link">Download</a></h5>
+              <h5 class="card-subtitle mb-2 text-muted"><a href="{% url 'download_attendance' id=hall_id %}" class="card-link">Download</a></h5>
               
             </div>
           </div>
-          <div class="col-md-3 card sty  m-2">
-            <div class="card-body">
-              <h4 class="card-title">Display</h4>
-              <h5 class="card-subtitle mb-2 text-muted"><a href="" class="card-link">Download</a></h5>
-              
-            </div>
-          </div>
+
          
           
 
