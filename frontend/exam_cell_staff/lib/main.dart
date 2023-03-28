@@ -2,9 +2,11 @@ import 'package:exam_cell_staff/splash.dart';
 import 'package:flutter/material.dart';
 
 import 'login.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 const SAVE_KEY_NAME = "UserLogedIn";
-void main() {
+
+void main() async {
   runApp(const MyApp());
 }
 

@@ -48,6 +48,11 @@ urlpatterns = [
     path('attendance_marking',views.attendance_marking,name='attendance_marking'),
     path('mark_absenties/',views.mark_absenties,name='mark_absenties'),
     path('view_attendance/',views.view_attendance,name='view_attendance'),
+    path('view_reported_malpractice',views.view_reported_malpractice,name='view_reported_malpractice'),
+    path('get_info',views.get_info,name='get_info'),
+    path('view_image/<path:img>/<int:id>',views.view_image,name='view_image'),
+
+
 
 
 
@@ -69,6 +74,18 @@ urlpatterns = [
     path('staff_login',views.staff_login,name='staff_login'),
     path('get_staff',views.get_staff,name='get_staff'),
     path('edit_staff_app',views.edit_staff_app,name='edit_staff_app'),
+    path('get_allocation',views.get_allocation,name='get_allocation'),
+    path('edit_password_app',views.edit_password_app,name='edit_password_app'),
+    path('report_mal_practice',views.report_mal_practice,name='report_mal_practice'),
+    path('get_reports',views.get_reports,name='get_reports'),
+    path('get_students',views.get_students,name='get_students'),
+    path('get_report',views.get_report,name='get_report'),
+
+
+
+    
+
+
 
 
 

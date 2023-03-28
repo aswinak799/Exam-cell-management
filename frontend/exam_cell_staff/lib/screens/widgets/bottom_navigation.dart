@@ -1,7 +1,6 @@
 import 'package:exam_cell_staff/screens/home.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 
 class BottomNavigation extends StatelessWidget {
@@ -13,6 +12,9 @@ class BottomNavigation extends StatelessWidget {
       valueListenable: HomeScreen.selectedIndexNotifire,
       builder: (BuildContext ctx, int updatedindex, Widget? _) {
         return BottomNavigationBar(
+            backgroundColor: Colors.white38,
+            elevation: 10,
+            type: BottomNavigationBarType.shifting,
             selectedItemColor: Colors.indigoAccent[400],
             unselectedItemColor: Colors.grey,
             selectedFontSize: 18.0,

@@ -48,7 +48,7 @@ class _ReportScreenState extends State<ReportScreen>
             controller: _tabController,
             children: const [
               ReportList(),
-              NewReport(),
+              SelectHall(),
             ],
           ),
         )

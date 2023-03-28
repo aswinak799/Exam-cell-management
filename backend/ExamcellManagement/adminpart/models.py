@@ -82,6 +82,10 @@ class report_malpractice(models.Model):
     image = models.ImageField()
     message = models.CharField(max_length=250)
     staff_id = models.ForeignKey(staff,on_delete=models.CASCADE)
+    alloc_id = models.ForeignKey(staff_allocation,on_delete=models.CASCADE)
+    student_id = models.ForeignKey(schedule_details,blank=True, null=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    admin_view = models.BooleanField(default=False)
 
 class upload_excel_sheet(models.Model):
     appearing_list = models.FileField()

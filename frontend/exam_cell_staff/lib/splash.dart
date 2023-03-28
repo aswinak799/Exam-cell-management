@@ -1,5 +1,7 @@
+import 'package:exam_cell_staff/config/ip.dart';
 import 'package:exam_cell_staff/login.dart';
 import 'package:exam_cell_staff/main.dart';
+import 'package:exam_cell_staff/screens/chief_home.dart';
 import 'package:exam_cell_staff/screens/home.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,7 +29,7 @@ class _ScreenSplashState extends State<ScreenSplash> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.green[100],
+      backgroundColor: Colors.white,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.only(right: 50.0),
@@ -63,17 +65,28 @@ class _ScreenSplashState extends State<ScreenSplash> {
     final _sh_pref = await SharedPreferences.getInstance();
     // _sh_pref.setBool(SAVE_KEY_NAME, true);
     final UserLogedin = _sh_pref.getBool(SAVE_KEY_NAME);
+    final type = _sh_pref.getString('type');
     if (UserLogedin == null || UserLogedin == false) {
       gotoLogin();
     } else {
       // ignore: use_build_context_synchronously
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: ((context) {
-            return HomeScreen();
-          }),
-        ),
-      );
+      if (type == 'Invigilator') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: ((context) {
+              return HomeScreen();
+            }),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: ((context) {
+              return ChiefHome();
+            }),
+          ),
+        );
+      }
     }
   }
 }

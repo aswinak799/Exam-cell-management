@@ -1,5 +1,5 @@
 import 'package:exam_cell_staff/login.dart';
-import 'package:exam_cell_staff/screens/notification.dart';
+import 'package:exam_cell_staff/screens/notification/notification.dart';
 import 'package:exam_cell_staff/screens/profile.dart';
 import 'package:exam_cell_staff/screens/report.dart';
 import 'package:exam_cell_staff/screens/widgets/bottom_navigation.dart';
@@ -21,6 +21,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
+        leading: Image.asset('asset/kmct.png'),
         title: Center(
           child: Text(
             'KMCT EXAM CELL',

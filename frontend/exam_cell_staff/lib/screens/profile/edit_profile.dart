@@ -65,7 +65,7 @@ class _EditProfileState extends State<EditProfile> {
     // int id = _sharedprif.getInt('id') ?? 0;
     // String idString = id.toString();
     var request = http.MultipartRequest(
-        'POST', Uri.parse('http://$MY_IP:8000/edit_staff'));
+        'POST', Uri.parse('http://$MY_IP:8000/edit_staff_app'));
 
     request.fields['id'] = sid;
     request.fields['name'] = value;
@@ -103,7 +103,7 @@ class _EditProfileState extends State<EditProfile> {
         ),
         shadowColor: Colors.indigoAccent,
         clipBehavior: Clip.hardEdge,
-        color: Colors.white70,
+        color: Colors.white,
         child: Form(
           key: _formKey,
           child: Padding(
@@ -120,6 +120,7 @@ class _EditProfileState extends State<EditProfile> {
                 ),
                 SizedBox(height: 20.0),
                 TextFormField(
+                  style: GoogleFonts.aladin(fontWeight: FontWeight.bold),
                   controller: _nameController,
                   decoration: InputDecoration(
                     labelStyle: GoogleFonts.aladin(

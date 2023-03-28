@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:exam_cell_staff/config/LocalNotificationHelper.dart';
 import 'package:exam_cell_staff/config/ip.dart';
 import 'package:exam_cell_staff/login.dart';
+import 'package:exam_cell_staff/screens/notification/allocation.dart';
 import 'package:exam_cell_staff/screens/profile/change_password.dart';
 import 'package:exam_cell_staff/screens/profile/edit_profile.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +21,30 @@ class _ViewProfileState extends State<ViewProfile> {
   _ViewProfileState() {
     viewProfile();
   }
+  late final NotificationService notificationService;
+  @override
+  void initState() {
+    notificationService = NotificationService();
+    listenToNotificationStream();
+    notificationService.initializePlatformNotifications();
+
+    super.initState();
+  }
+
+  void listenToNotificationStream() =>
+      notificationService.behaviorSubject.listen((payload) {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => Allocation()));
+      });
+
+  Future<void> notify() async {
+    await notificationService.showLocalNotification(
+        id: 0,
+        title: "EXAMCELL KMCT",
+        body: "YOU WHERE ALLOCATED NEW DUTY",
+        payload: "You just took water! Huurray!");
+  }
+
   String name = "";
   String dept = "";
   String type = "";
@@ -36,6 +62,7 @@ class _ViewProfileState extends State<ViewProfile> {
     request.fields['id'] = idString;
     var response = await request.send();
     if (response.statusCode == 200) {
+      notify();
       final body = await response.stream.bytesToString();
       final data = json.decode(body);
       if (mounted) {
@@ -75,23 +102,24 @@ class _ViewProfileState extends State<ViewProfile> {
           ),
           shadowColor: Colors.indigoAccent,
           clipBehavior: Clip.hardEdge,
-          color: Colors.white70,
+          color: Colors.white,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
-                radius: 50.0,
+                maxRadius: 50,
+                backgroundImage: NetworkImage(
+                    'http://$MY_IP:8000/media/4cea42da8523fa2ca17a60574042d169.png '),
               ),
-              SizedBox(height: 16.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.local_fire_department),
+                  const Icon(Icons.local_fire_department),
                   Text(
                     name,
                     style: GoogleFonts.aladin(
-                      fontSize: 30.0,
+                      fontSize: 40.0,
                       fontWeight: FontWeight.w800,
                     ),
                   ),

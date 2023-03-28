@@ -1,7 +1,7 @@
 from django.shortcuts import render ,redirect
 # from rest_framework import status
 from django.http import HttpResponse ,JsonResponse
-
+import datetime
 from adminpart.decorators import custom_login_required
 # from django.contrib.auth import authenticate, login
 from .models import *
@@ -295,7 +295,7 @@ def delete_room(request,id):
 #         return render(request,'upload-list.html')
 
 @custom_login_required
-def select_halls(request):
+def select_halls1(request):
     if request.POST:
         halls=request.POST.getlist('hall_id')
         ob=studentDetails.objects.filter(schedule__date=request.session['date'],schedule__slot=request.session['session']).order_by('reg_no')
@@ -398,6 +398,190 @@ def select_halls(request):
                        
                         if min_index_id>=len(max_ob):
                             print("=====================")
+                        else:
+                            minindex=max_ob[min_index_id]
+                            print(minindex.subject_id.sub_name,minindex.count,max_index_id,min_index_id)
+                            index=sublist.index(minindex.subject_id.id)
+                            students=studentlist[index]
+                            print(minindex.subject_id.id)
+                            print(len(students),"==",countlist[index],"=====",minindex.count)
+                            ob_c_stud=students[countlist[index]-minindex.count]
+                        
+                            row=[ob_c_stud,(2*ii)+2]
+                            halldetails.append(row)
+                            minindex.count=minindex.count-1;
+                            minindex.save()
+               
+            alocation.append(halldetails)  
+        for i in range(0,len(alocation)):
+            hid=halls[i]
+            # print(i)
+            for ii in alocation[i]:
+                sid=ii[0]
+                sno=ii[1]
+                # print(ii,'********/////////')
+                
+                print(hid,"-",ii[1],"=",ii[0].student,ii[0].subject)
+                schedule_details_object =schedule_details()
+                schedule_details_object.hall_id = hall.objects.get(id = hid)
+                schedule_details_object.seat_no = ii[1]
+                schedule_details_object.student = ii[0].student
+                schedule_details_object.reg_no = ii[0].reg_no
+                schedule_details_object.shedule_id = ii[0].schedule
+                schedule_details_object.subject_id = ii[0].subject
+                schedule_details_object.save()
+                
+
+
+                # scheduleDetails = schedule_details(shedule_id = sid)
+        students = studentDetails.objects.all()
+        counts = countList.objects.all()
+        for i in students:
+            i.delete()
+        for i in counts:
+            i.delete()
+        return redirect('halls_and_reports')                
+                
+
+
+    else:
+        try:
+            ob=studentDetails.objects.filter(schedule__date=request.session['date'],schedule__slot=request.session['session'])
+            count=len(ob)   
+            halls = hall.objects.filter(status = 'active')
+            if count == 0:
+                return HttpResponse('''<script>alert("There is no students to allocate");window.location='seating'</script>''')
+            
+            return render(request,'hall-allocation.html',{'halls':halls,"count":count})
+        except:
+            return HttpResponse('''<script>alert("There is no students to allocate");window.location='seating'</script>''')
+
+@custom_login_required
+def select_halls(request):
+    if request.POST:
+        halls=request.POST.getlist('hall_id')
+        ob=studentDetails.objects.filter(schedule__date=request.session['date'],schedule__slot=request.session['session']).order_by('reg_no')
+        count=len(ob)
+        sublist=[]
+        for i in ob:
+            if i.subject.id not in sublist:
+                sublist.append(i.subject.id)
+        studentlist=[]
+        for i in sublist:
+            obs=studentDetails.objects.filter(subject__id=i)
+            studentlist.append(obs)
+
+        countlist=[]
+        for i in studentlist:
+            obcount=countList()
+            obcount.count=len(i)
+            # print(i)
+            obcount.subject_id=i[0].subject
+            obcount.save()
+            countlist.append(len(i))
+        # for i in range(0,len(countlist)):
+        #     print(countlist[i],sublist[i])
+        # return HttpResponse('File uploaded')                
+          
+        alocation=[]
+        max_ob=countList.objects.filter(count__gte=1).order_by('-count')
+        max_index_id=0
+        min_index_id=1
+        for i in halls:
+            hob=hall.objects.get(id=i)
+            
+            if max_index_id>=len(max_ob) and min_index_id>len(max_ob):
+                break
+            if max_index_id<len(max_ob):             
+                maxindex=max_ob[max_index_id]
+            # print(maxindex,'*************************')
+            # minindex=max_ob[len(max_ob)-1]
+            if min_index_id<len(max_ob):
+                minindex=max_ob[min_index_id]
+            
+            
+            halldetails=[]
+            # counter = 0
+            for ii in range(0,int(hob.capacity/2)):
+                
+                if maxindex.count!=0:
+                    index=sublist.index(maxindex.subject_id.id)
+                    students=studentlist[index]
+                    
+                    ob_c_stud=students[countlist[index]-maxindex.count]
+                    
+                    row=[ob_c_stud,(2*ii)+1]
+                    halldetails.append(row)
+                    maxindex.count=maxindex.count-1;
+                    maxindex.save()
+                else:
+                    print("======================================")
+                    print(max_index_id,min_index_id)
+                    if min_index_id>max_index_id:
+                        max_index_id=min_index_id+1
+                    else:
+                        max_index_id=max_index_id+1
+                    if max_index_id>=len(max_ob):
+                        try:
+                            index=sublist.index(minindex.subject_id.id)
+                            students=studentlist[index]
+                        
+                            ob_c_stud=students[countlist[index]-minindex.count]
+                            row=[ob_c_stud,(2*ii)+1]
+                            halldetails.append(row)
+                            minindex.count=minindex.count-1;
+                            minindex.save()
+                        except:
+                            pass
+                    else:
+                        
+                        maxindex=max_ob[max_index_id]
+                        print(maxindex.subject_id.sub_name,maxindex.count,max_index_id,min_index_id)
+                        
+                        index=sublist.index(maxindex.subject_id.id)
+                        students=studentlist[index]
+                        print(len(students),"====",countlist[index],"=====",maxindex.count)
+                        ob_c_stud=students[countlist[index]-maxindex.count]
+                        
+                        row=[ob_c_stud,(2*ii)+1]
+                        halldetails.append(row)
+                        maxindex.count=maxindex.count-1;
+                        maxindex.save()
+
+
+
+                if minindex.count!=0:
+                    index=sublist.index(minindex.subject_id.id)
+                    students=studentlist[index]
+                   
+                    ob_c_stud=students[countlist[index]-minindex.count]
+                    row=[ob_c_stud,(2*ii)+2]
+                    halldetails.append(row)
+                    minindex.count=minindex.count-1;
+                    minindex.save()
+                else:
+                        print("**********************************")
+                        print(max_index_id,min_index_id,len(max_ob))
+                        if min_index_id>max_index_id:
+                            min_index_id=min_index_id+1
+                        else:
+                            min_index_id=max_index_id+1
+                    
+                       
+                        if min_index_id>=len(max_ob):
+                            print("=====================")
+                            try:
+                                index=sublist.index(maxindex.subject_id.id)
+                                students=studentlist[index]
+                                
+                                ob_c_stud=students[countlist[index]-maxindex.count]
+                                
+                                row=[ob_c_stud,(2*ii)+2]
+                                halldetails.append(row)
+                                maxindex.count=maxindex.count-1;
+                                maxindex.save()
+                            except:
+                                pass
                         else:
                             minindex=max_ob[min_index_id]
                             print(minindex.subject_id.sub_name,minindex.count,max_index_id,min_index_id)
@@ -779,6 +963,10 @@ def seating(request):
         request.session['date']=date
         request.session['session']=session
         excel_file = request.FILES['appearing_list']
+        try:
+            schedule_obj_exist = schedule.objects.get(date = date,slot = session)
+        except:
+            schedule_obj_exist = None
     
         fs = FileSystemStorage()
         filename = fs.save(excel_file.name, excel_file)
@@ -786,48 +974,56 @@ def seating(request):
         df = pd.read_excel(excel_file)
         for index, row in df.iterrows():
             if index == 1:
-                make_schedule = schedule(date = date,slot = session,exam_name = row[4])
-                make_schedule.save()
-                schedule_id = make_schedule.pk
-                request.session['schedule'] = schedule_id
-                schedule_instance = schedule.objects.get(id = schedule_id)
+                if schedule_obj_exist is not None:
+                    print(schedule_obj_exist.exam_name+","+row[4],"888****8888888*999999999966666665/////*****")
+                    schedule_obj_exist.exam_name = schedule_obj_exist.exam_name+","+row[4]
+                    schedule_obj_exist.save()
+                    schedule_instance = schedule.objects.get(id = request.session['schedule'])
+                else:
+
+                    make_schedule = schedule(date = date,slot = session,exam_name = row[4])
+                    make_schedule.save()
+                    schedule_id = make_schedule.pk
+                    request.session['schedule'] = schedule_id
+                    schedule_instance = schedule.objects.get(id = schedule_id)
 
 
             if index > 0:
+                if row[11]=='Yes':
 
-                
-                start_index = row[0].find('(')
-                end_index = row[0].find(')')
+                    print(row[11])
+                    start_index = row[0].find('(')
+                    end_index = row[0].find(')')
 
-                start_index_7 = row[7].find('(')
-                end_index_7 = row[7].find(')')
+                    start_index_7 = row[7].find('(')
+                    end_index_7 = row[7].find(')')
 
-                if start_index != -1 and end_index != -1:
-                    name = row[0][0:start_index]
-                    req_no = row[0][start_index+1:end_index]
+                    if start_index != -1 and end_index != -1:
+                        name = row[0][0:start_index]
+                        req_no = row[0][start_index+1:end_index]
 
 
 
-                if start_index_7 != -1 and end_index_7 != -1:
-                    course = row[7][0:start_index_7]
-                    course_code = row[7][start_index_7+1:end_index_7]
+                    if start_index_7 != -1 and end_index_7 != -1:
+                        course = row[7][0:start_index_7]
+                        course_code = row[7][start_index_7+1:end_index_7]
+                        
+                    print(name,"  ",req_no,"  ",course," ",course_code,"  ",row[4],"  ",row[3])
                     
-                print(name,"  ",req_no,"  ",course," ",course_code,"  ",row[4],"  ",row[3])
-                
-                try:
-                    sub_obj = subject.objects.get(code = course_code)
-                except:
-                    sub_obj = None
-                if sub_obj is not None:
-                    sub_instance = sub_obj
-                else:
-                    sub_details = subject(code = course_code,branch = row[3],sub_name = course)
-                    sub_details.save()
-                    sub_id = sub_details.pk
-                    sub_instance = subject.objects.get(id = sub_id)
+                    try:
+                        sub_obj = subject.objects.get(code = course_code)
+                    except:
+                        sub_obj = None
+                    if sub_obj is not None:
+                        sub_instance = sub_obj
+                    else:
+                        sub_details = subject(code = course_code,branch = row[3],sub_name = course)
+                        sub_details.save()
+                        sub_id = sub_details.pk
+                        sub_instance = subject.objects.get(id = sub_id)
 
-                student_details = studentDetails(reg_no = req_no,student = name,subject = sub_instance,schedule = schedule_instance)
-                student_details.save()
+                    student_details = studentDetails(reg_no = req_no,student = name,subject = sub_instance,schedule = schedule_instance)
+                    student_details.save()
         return redirect('seating')
         # else:
         #     if request.session['date'] and request.session['session']:
@@ -1293,6 +1489,27 @@ def view_attendance(request):
 
 
 
+def view_reported_malpractice(request):
+    reports = report_malpractice.objects.all().order_by('-created_at')
+    return render(request,'view_reported_malpractice.html',{'reports':reports})
+
+
+def get_info(request):
+    print('get_infoooooooooooooooooooooooooooos')
+    nums = report_malpractice.objects.filter(admin_view = False)
+    return JsonResponse({'message':True,'count':len(nums)})
+
+def view_image(request,img,id):
+    print(id,img)
+    make_view = report_malpractice.objects.get(id = id)
+    print(make_view.admin_view,'***************************')
+   
+    print('0000000000000003333333333333333333333#########################3')
+    make_view.admin_view = True
+    make_view.save()
+    return render(request,'viewimg.html',{'image':img})
+
+
 
 # ---------------------------staff----------app-------------------------------
 
@@ -1360,10 +1577,176 @@ def edit_staff_app(request):
 
 
         if staff_obj is not None :
-            print(staff_obj.name,"///////////************////////////*********")
+            # print(staff_obj.name,"///////////************////////////*********")
             
             return JsonResponse({'name':staff_obj.name,'id':staff_obj.pk,'type':staff_obj.stafftype,'dept':staff_obj.dept.d_name,'ktu_id':staff_obj.l_id.username})
         else:
             return JsonResponse({'message': 'Invalid credentials'},status=401)
     else:
         return JsonResponse({'message': 'Invalid request method'},status = 401)
+
+
+@csrf_exempt
+def get_allocation(request):
+    if request.method == 'POST':
+        staff_id = request.POST.get('id')
+        try:
+            allocobj = staff_allocation.objects.filter(staff_id__id = staff_id).order_by('-schedule__date')
+        except:
+            allocobj = None
+        if allocobj is not None:
+            data=[]
+            cr={}
+            for i in allocobj:
+                # print(i.)
+                try:
+                    cr = {'id':i.pk,'hall':i.hall_id.hall_name,'date':i.schedule.date,'exam':i.schedule.exam_name,'slot':i.schedule.slot}
+                except:
+                    cr = {'id':i.pk,'hall':'Exam Cell','date':i.schedule.date,'exam':i.schedule.exam_name,'slot':i.schedule.slot}
+
+                data.append(cr)
+            # print(data)
+            return JsonResponse({'alloc_list': data})
+        else:
+            return JsonResponse({'message': 'Invalid request method'},status = 401)
+
+
+@csrf_exempt
+def edit_password_app(request):
+    if request.method == 'POST':
+        staff_id = request.POST.get('id')
+        old = request.POST.get('oldpass')
+        newpasswd = request.POST.get('newpass')
+        try:
+            staff_obj = staff.objects.get(id = staff_id)
+            login_obj = login_table.objects.get(id = staff_obj.l_id.pk)
+            is_correct = check_password(old, login_obj.password)
+            hashed_password = make_password(newpasswd)
+            
+        except:
+            is_correct = False
+        
+        if is_correct:
+            login_obj.password = hashed_password
+            login_obj.save()
+
+            # print(staff_id,old,newpasswd,"==========================")
+            return JsonResponse({'message': 'Successfully changed password'})
+
+
+        return JsonResponse({'message': 'Invalid Old Password '},status = 401)
+
+
+
+@csrf_exempt
+def report_mal_practice(request):
+    if request.method == 'POST' and request.FILES.get('image'):
+        image_file = request.FILES['image']
+        message = request.POST.get('message')
+        alloc_id = request.POST.get('alloc_id')
+        staff_id = request.POST.get('staff_id')
+        student_id = request.POST.get('student_id')
+
+        try:
+            student = schedule_details.objects.get(id = student_id)
+        except:
+            return JsonResponse({'message': 'Report again'},status = 401)
+
+        # fs = FileSystemStorage()
+        # filename = fs.save(image_file.name, image_file)
+        # filepath = fs.path(filename)
+        report = report_malpractice(image = image_file,message = message,staff_id = staff.objects.get(id = staff_id) ,alloc_id = staff_allocation.objects.get(id = alloc_id),student_id = student)
+        report.save()
+        # print(report.image.url,"******************************")
+
+        return JsonResponse({'message': 'Reporting Successfull.'})
+    else:
+        return JsonResponse({'message': 'Invalid request'},status = 401)
+
+
+
+
+@csrf_exempt
+def get_reports(request):
+    if request.method == 'POST':
+        staff_id = request.POST.get('id')
+        try:
+            reports = report_malpractice.objects.filter(staff_id__id = staff_id).order_by('-created_at')
+        except:
+            reports = None
+        if reports is not None:
+            data=[]
+            cr={}
+            for i in reports:
+                # print(i.)
+                date = str(i.created_at).split(" ")
+
+                
+                dt = datetime.datetime.fromisoformat(str(i.created_at))
+
+                # Convert to local time (optional)
+                dt = dt.astimezone()
+
+                # Format as a string in 12-hour format with AM/PM indication
+                formatted_time = dt.strftime("%I:%M %p")
+
+                print(formatted_time,"00000000000000000")
+
+
+                # print(date)
+                cr = {'id':i.pk,'hall':i.alloc_id.hall_id.hall_name,'date':date[0],'time':formatted_time,'exam':i.alloc_id.schedule.exam_name,'slot':i.alloc_id.schedule.slot,'message':i.message,'image':i.image.url}
+               
+
+                data.append(cr)
+
+            print(data)
+            return JsonResponse({'report': data})
+        else:
+            return JsonResponse({'message': 'Invalid request method'},status = 401)
+
+@csrf_exempt
+def get_students(request):
+    if request.POST:
+        alloc_id = request.POST.get('alloc_id')
+        staff_id = request.POST.get('staff_id')
+        alloc_det = staff_allocation.objects.get(id = alloc_id)        
+        print(alloc_det.hall_id,alloc_det.schedule,)
+        students = schedule_details.objects.filter(shedule_id = alloc_det.schedule, hall_id  = alloc_det.hall_id)
+
+        print(len(students))
+        print("===============================")
+
+        data = []
+        
+        for i in students:
+            row ={"id":i.pk,'student':i.student+ " - " +i.reg_no}
+            data.append(row)
+
+        print("===============================")
+        print(data)
+        return JsonResponse({'students': data})
+    
+
+@csrf_exempt
+def get_report(request):
+    if request.POST:
+        mal_id = request.POST.get('id')
+        print(mal_id)
+        report_mal = report_malpractice.objects.get(id = mal_id)
+        date = str(report_mal.created_at).split(" ")
+
+                
+        dt = datetime.datetime.fromisoformat(str(report_mal.created_at))
+
+                # Convert to local time (optional)
+        dt = dt.astimezone()
+
+                # Format as a string in 12-hour format with AM/PM indication
+        formatted_time = dt.strftime("%I:%M %p")
+        try:
+            row = {'student':report_mal.student_id.student,'reg_no':report_mal.student_id.reg_no,'hall':report_mal.alloc_id.hall_id.hall_name,'exam':report_mal.alloc_id.schedule.exam_name,'slot':report_mal.alloc_id.schedule.slot,'date':date[0],'time':formatted_time,'message':report_mal.message,'image':report_mal.image.url}
+        except:
+            return JsonResponse({'message':'somthing wrong'},status = 401)
+        print(report_mal.student_id.student,"=====================")
+        return JsonResponse(row)
+

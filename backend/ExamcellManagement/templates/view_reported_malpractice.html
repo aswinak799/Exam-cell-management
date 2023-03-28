@@ -1,0 +1,174 @@
+{% extends 'admin-header.html' %}
+
+{% block body %}
+
+<style type="text/css">
+ 
+  .btn{
+    border-radius: 16px;
+    width:100%;
+  }
+  /* Popup container - can be anything you want */
+/*.popup {
+position: relative;
+display: inline-block;
+cursor: pointer;
+-webkit-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+user-select: none;
+}
+
+/* The actual popup */
+/*.popup .popuptext {
+visibility: hidden;
+width: 160px;
+background-color: #555;
+color: #fff;
+text-align: center;
+border-radius: 6px;
+padding: 8px 0;
+position: absolute;
+z-index: 1;
+bottom: 125%;
+left: 50%;
+margin-left: -80px;
+}
+
+/* Popup arrow */
+/*.popup .popuptext::after {
+content: "";
+position: absolute;
+top: 100%;
+left: 50%;
+margin-left: -5px;
+border-width: 5px;
+border-style: solid;
+border-color: #555 transparent transparent transparent;
+}
+
+/* Toggle this class - hide and show the popup */
+/*.popup .show {
+visibility: visible;
+-webkit-animation: fadeIn 1s;
+animation: fadeIn 1s;
+}
+
+/* Add animation (fade in the popup) */
+/*@-webkit-keyframes fadeIn {
+from {opacity: 0;} 
+to {opacity: 1;}
+}
+
+@keyframes fadeIn {
+from {opacity: 0;}
+to {opacity:1 ;}
+}*/
+</style>
+
+
+
+
+
+
+<section class="p-2">
+
+  <h1 class="text-center">Staff List</h1>
+{% if message is not None %}
+<div class="p-2">
+<div class="alert alert-success" role="alert">
+  {{message}} added successful
+</div>
+</div>
+{% endif %}
+  
+
+  
+
+  <div class="mt-3">
+    <div class="col-12">
+      <div class="card recent-sales overflow-auto">
+
+       
+
+        <div class="card-body">
+          
+          <h5 class="card-title">Reports <span>| All</span></h5>
+          <table class="table-borderless mt-5" id="productstable">
+            <thead>
+              <tr>
+
+                
+                <th scope="col">Slno</th>
+                <th scope="col">Hall</th>
+                <th scope="col">Staff</th>
+                <th scope="col">Student</th>
+
+                {% comment %} <th scope="col">image</th> {% endcomment %}
+                <th scope="col">Message</th>
+                <th scope="col">Date</th>
+                <th scope="col">view</th>
+
+                
+                
+              </tr>
+            </thead>
+            <tbody>
+             {% for report in reports %}
+
+             <tr>
+              <td>{{forloop.counter}}</td>
+              <td>{{report.alloc_id.hall_id.hall_name}}</td>
+              <td>{{report.staff_id.name}}</td>
+              <td>{{report.student_id.student}} - {{report.student_id.reg_no}}</td>
+              {% comment %} <td><img src="{{report.image.url}}" alt="" style="width: 80px; height: 80px;"></td> {% endcomment %}
+              <td>
+                {{report.message}}
+              </td>
+              <td>
+                {{report.created_at}}
+              </td>
+              <td>
+                {% if report.admin_view %}
+                <a href="{% url 'view_image' img=report.image.url id=report.id %}" class="btn btn-success btn-sm">viewed</a>
+                {% else %}
+                <a href="{% url 'view_image' img=report.image.url id=report.id %}" class="btn btn-danger btn-sm">view</a>
+                {% endif %}
+            </td>
+            </tr>
+             
+             {% endfor %}
+                
+
+              
+
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+</section>
+
+
+
+
+
+
+
+<script>
+  $(document).ready( function () { $('#productstable').DataTable(); } );
+  /*function myFunction() {
+  var popup = document.getElementById("myPopup");
+  popup.classList.toggle("show");
+  }*/
+  </script>
+
+
+
+{% endblock %}
+
+

@@ -540,6 +540,14 @@
         </a>
       </li>
 
+      <!--llllll-->
+      
+
+
+
+      <!--llllll-->
+
+
       <li class="nav-item mt-3">
         <a class="nav-link " href="/admin/feedback">
           <i class="bi bi-chat-left-fill"></i>
@@ -547,9 +555,9 @@
         </a>
       </li>
       <li class="nav-item mt-3">
-        <a class="nav-link " href="/admin/user-feedback">
+        <a class="nav-link " href="{% url 'view_reported_malpractice' %}">
           <i class="fa-solid fa-eye"></i>
-          <span>view reported Malpractice</span>
+          <span>view reported Malpractice</span><span id='countinfo' class="badge badge-danger" style="width: 25px;height: 25px;font-size: 15px; font-weight: bold;"></span>
         </a>
       </li>
       
@@ -609,6 +617,25 @@
   
 
   <!-- Template Main JS File -->
+  <script>
+    
+    $(document).ready(function() {
+      var info = document.getElementById('countinfo');
+    $.ajax({
+        url: '/get_info',
+        type: 'GET',
+        dataType: 'json',
+        success: function(data) {
+          info.innerHTML = data.count;
+            // Handle the response data here
+        },
+        error: function(xhr, status, error) {
+            // Handle the error here
+        }
+    });
+});
+
+  </script>
   
   <script src="{% static 'javascript/admin_script.js'%}"></script>
   
