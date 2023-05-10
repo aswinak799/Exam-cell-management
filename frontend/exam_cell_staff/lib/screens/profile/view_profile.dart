@@ -21,29 +21,29 @@ class _ViewProfileState extends State<ViewProfile> {
   _ViewProfileState() {
     viewProfile();
   }
-  late final NotificationService notificationService;
-  @override
-  void initState() {
-    notificationService = NotificationService();
-    listenToNotificationStream();
-    notificationService.initializePlatformNotifications();
+  // late final NotificationService notificationService;
+  // @override
+  // void initState() {
+  //   notificationService = NotificationService();
+  //   listenToNotificationStream();
+  //   notificationService.initializePlatformNotifications();
 
-    super.initState();
-  }
+  //   super.initState();
+  // }
 
-  void listenToNotificationStream() =>
-      notificationService.behaviorSubject.listen((payload) {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => Allocation()));
-      });
+  // void listenToNotificationStream() =>
+  //     notificationService.behaviorSubject.listen((payload) {
+  //       Navigator.push(
+  //           context, MaterialPageRoute(builder: (context) => Allocation()));
+  //     });
 
-  Future<void> notify() async {
-    await notificationService.showLocalNotification(
-        id: 0,
-        title: "EXAMCELL KMCT",
-        body: "YOU WHERE ALLOCATED NEW DUTY",
-        payload: "You just took water! Huurray!");
-  }
+  // Future<void> notify() async {
+  //   await notificationService.showLocalNotification(
+  //       id: 0,
+  //       title: "EXAMCELL KMCT",
+  //       body: "YOU WHERE ALLOCATED NEW DUTY",
+  //       payload: "You just took water! Huurray!");
+  // }
 
   String name = "";
   String dept = "";
@@ -62,7 +62,7 @@ class _ViewProfileState extends State<ViewProfile> {
     request.fields['id'] = idString;
     var response = await request.send();
     if (response.statusCode == 200) {
-      notify();
+      // notify();
       final body = await response.stream.bytesToString();
       final data = json.decode(body);
       if (mounted) {

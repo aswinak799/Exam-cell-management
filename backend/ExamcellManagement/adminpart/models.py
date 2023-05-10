@@ -37,6 +37,7 @@ class staff_allocation(models.Model):
      hall_id = models.ForeignKey(hall,blank=True, null=True, on_delete=models.SET_NULL)
      schedule = models.ForeignKey(schedule,on_delete=models.CASCADE)
      date = models.DateField(auto_now_add=True)
+     status = models.CharField(max_length=50,default='pending')
 
 class subject(models.Model):
     code = models.CharField(max_length=20)
@@ -77,6 +78,8 @@ class malpractice(models.Model):
     datetime = models.DateTimeField()
     image = models.ImageField()
     status = models.BooleanField()
+    staff_status = models.BooleanField(default=0)
+
 
 class report_malpractice(models.Model):
     image = models.ImageField()

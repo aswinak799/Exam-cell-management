@@ -539,6 +539,12 @@
           <span>View Attendance</span>
         </a>
       </li>
+      <li class="nav-item mt-3">
+        <a class="nav-link " href="{% url 'view_staff_attendance' %}">
+          <i class="bi bi-table"></i>
+          <span>View Staff Attendance</span>
+        </a>
+      </li>
 
       <!--llllll-->
       
@@ -549,9 +555,10 @@
 
 
       <li class="nav-item mt-3">
-        <a class="nav-link " href="/admin/feedback">
+        <a class="nav-link " href="{% url 'get_detection_notification' %}">
           <i class="bi bi-chat-left-fill"></i>
           <span>Notification</span>
+          <span id='countmal' class="badge badge-danger" style="width: 40px;height: 25px;font-size: 15px; font-weight: bold; margin-left: 10px;"></span>
         </a>
       </li>
       <li class="nav-item mt-3">
@@ -621,6 +628,7 @@
     
     $(document).ready(function() {
       var info = document.getElementById('countinfo');
+      var mal_info = document.getElementById('countmal')
     $.ajax({
         url: '/get_info',
         type: 'GET',
@@ -633,6 +641,20 @@
             // Handle the error here
         }
     });
+
+    $.ajax({
+      url: '/get_mal_info',
+      type: 'GET',
+      dataType: 'json',
+      success: function(data) {
+        mal_info.innerHTML = data.count;
+          // Handle the response data here
+      },
+      error: function(xhr, status, error) {
+          // Handle the error here
+      }
+  });
+
 });
 
   </script>

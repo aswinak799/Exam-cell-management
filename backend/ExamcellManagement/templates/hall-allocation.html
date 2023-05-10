@@ -16,8 +16,8 @@
                   <tr style="justify-content: space-around;">
     
                     
-                    <th scope="col" colspan="4"><div align="center">You nees to select {{count}} seats</div></th>
-                    
+                    <th scope="col" colspan="4"><div align="center">You nees to select <span id="count">{{count}}</span> seats</div></th>
+                    <span id="countDupe" style="display: none;">{{count}}</span>
                    
                     
                     
@@ -42,8 +42,8 @@
                   <td>{{hall.hall_name}}</td>
                   <td>{{hall.capacity}}</td>
                   <td><div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="{{hall.id}}" name="hall_id"  id="flexCheckDefault">
-                    <label class="form-check-label" for="flexCheckDefault">
+                    <input class="form-check-input" type="checkbox" value="{{hall.id}}" name="hall_id"  id="{{hall.id}}" onchange="manageCount('{{hall.capacity}}','{{hall.id}}')">
+                    <label class="form-check-label" for="{{hall.id}}">
                       select here ...
                     </label>
                   </div></td>
@@ -56,7 +56,7 @@
 
               </table>
               <div class="mt-4 align-center" style="border-radius: 5px; margin-left: 35%; width: 100px;">
-                <input class="btn btn-primary btn-lg"  type="submit" value="submit" />
+                <input class="btn btn-primary btn-lg" id="btn"  type="submit" value="submit" disabled>
 
               </div>
             </form>
@@ -66,6 +66,39 @@
     </div>
   </div>
 </section>
+
+
+<script>
+  function manageCount(capacity,check){
+    var btn = document.getElementById('btn');
+    var count = document.getElementById('count');
+    var countDupe = document.getElementById('countDupe');
+    var checked = document.getElementById(check)
+    // console.log(countDupe.innerHTML);
+    if(checked.checked){
+      countDupe.innerHTML = parseInt(countDupe.innerHTML)-parseInt(capacity);
+      
+      if(parseInt(count.innerHTML)<parseInt(capacity)){
+        count.innerHTML = '0';
+      }else{
+        count.innerHTML = parseInt(count.innerHTML)-parseInt(capacity);
+      }
+    }else{
+      count.innerHTML = parseInt(count.innerHTML)+parseInt(capacity);
+      countDupe.innerHTML = parseInt(countDupe.innerHTML)+parseInt(capacity);
+    }
+
+
+    if (parseInt(countDupe.innerHTML) >= 0) {
+      count.innerHTML = countDupe.innerHTML;
+    }else{
+      count.innerHTML = '0';
+      btn.removeAttribute("disabled");
+
+    }
+    
+  }
+</script>
 
 <style>
     .btn-lg{

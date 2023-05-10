@@ -2,14 +2,16 @@ from django.shortcuts import render ,redirect
 # from rest_framework import status
 from django.http import HttpResponse ,JsonResponse
 import datetime
+import time
+
 from adminpart.decorators import custom_login_required
 # from django.contrib.auth import authenticate, login
 from .models import *
 from django.contrib.auth.hashers import make_password,check_password
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import FileSystemStorage
-from openpyxl import load_workbook
-import xlrd
+# from openpyxl import load_workbook
+# import xlrd
 import pandas as pd
 from django.db import connection
 # from django.db import connection
@@ -630,6 +632,8 @@ def select_halls(request):
 
     else:
         try:
+            # request.session['date']='2023-05-13'
+            # request.session['session']='Afternoon'
             ob=studentDetails.objects.filter(schedule__date=request.session['date'],schedule__slot=request.session['session'])
             count=len(ob)   
             halls = hall.objects.filter(status = 'active')
@@ -648,15 +652,7 @@ def halls_and_reports(request):
       
         cursor.execute("select * from adminpart_hall where id in(select hall_id_id from adminpart_schedule_details where shedule_id_id="+str(request.session['schedule'])+")")
         row = cursor.fetchall()
-    #     print(row[1])
-    #     print("=============")
-    #     print("=============")
-    #     print("=============")
-    #     print("=============")
-    #     print("=============")
-    # print(row)
-
-    
+  
     return render(request,'halls_and_reports.html',{'row':row})
 
 
@@ -670,6 +666,7 @@ def display_report(request):
 
     
         result=[]
+        count = 0
         for i in row:
             cr={"hname":i[1],"det":[]}
             qry="select distinct subject_id_id from adminpart_schedule_details where shedule_id_id="+str(request.session['schedule'])+" and hall_id_id="+str(i[0])
@@ -680,13 +677,15 @@ def display_report(request):
                 sr={"branch":ob.branch,"regno":[],"count":0}
                 ob1=schedule_details.objects.filter(hall_id__id=i[0],shedule_id__id=request.session['schedule'],subject_id__id=sid[0]).order_by()
                 sr['count']=len(ob1)
+                count = count + len(ob1)
+
                 for reg in ob1:
                     sr['regno'].append(reg.reg_no)
                 cr['det'].append(sr)
             result.append(cr)
         print(result)
         examname = schedule.objects.get(id = request.session['schedule'])
-        return render(request,'display.html',{'result':result,'exam':examname})
+        return render(request,'display.html',{'result':result,'exam':examname,'count':count})
 
         
 
@@ -956,6 +955,8 @@ def generate_reports(request):
 def seating(request):
     
     if request.POST:
+        time.sleep(3)
+
     # btn=request.POST['btn']
     # if btn == 'upload':
         date = request.POST.get('date')
@@ -1038,7 +1039,7 @@ def seating(request):
 @custom_login_required
 def duties(request):
     with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where  id in (SELECT schedule_id from adminpart_staff_allocation);")
+            cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where  id in (SELECT schedule_id from adminpart_staff_allocation) ORDER BY adminpart_schedule.date DESC;")
             row = cursor.fetchall()
             print(row)
     return render(request,'view-duties.html',{'allocation':row})
@@ -1162,6 +1163,7 @@ def edit_allocated_staff(request):
         
         if alloc_obj is not None:
             alloc_obj.staff_id = staff.objects.get(id = staff_id)
+            alloc_obj.status = 'pending'
             alloc_obj.save()
             return JsonResponse({'message': 'Successfully Edited'})
         else:
@@ -1416,6 +1418,7 @@ def display_report_history(request):
 
     
         result=[]
+        count=0
         for i in row:
             cr={"hname":i[1],"det":[]}
             qry="select distinct subject_id_id from adminpart_schedule_details where shedule_id_id="+str(request.session['schedule_id_history'])+" and hall_id_id="+str(i[0])
@@ -1426,13 +1429,14 @@ def display_report_history(request):
                 sr={"branch":ob.branch,"regno":[],"count":0}
                 ob1=schedule_details.objects.filter(hall_id__id=i[0],shedule_id__id=request.session['schedule_id_history'],subject_id__id=sid[0]).order_by()
                 sr['count']=len(ob1)
+                count = count + len(ob1)
                 for reg in ob1:
                     sr['regno'].append(reg.reg_no)
                 cr['det'].append(sr)
             result.append(cr)
         print(result)
         examname = schedule.objects.get(id = request.session['schedule_id_history'])
-        return render(request,'display.html',{'result':result,'exam':examname})
+        return render(request,'display.html',{'result':result,'exam':examname,'count':count})
     
 @custom_login_required
 def attendance_marking(request):
@@ -1488,30 +1492,186 @@ def view_attendance(request):
     return render(request,'attendance_form_stud.html',{'rows':row})
 
 
-
+@custom_login_required
 def view_reported_malpractice(request):
     reports = report_malpractice.objects.all().order_by('-created_at')
     return render(request,'view_reported_malpractice.html',{'reports':reports})
 
 
 def get_info(request):
-    print('get_infoooooooooooooooooooooooooooos')
+    # print('get_infoooooooooooooooooooooooooooos')
     nums = report_malpractice.objects.filter(admin_view = False)
     return JsonResponse({'message':True,'count':len(nums)})
 
+@custom_login_required
 def view_image(request,img,id):
     print(id,img)
     make_view = report_malpractice.objects.get(id = id)
-    print(make_view.admin_view,'***************************')
+    # print(make_view.admin_view,'***************************')
    
-    print('0000000000000003333333333333333333333#########################3')
+    # print('0000000000000003333333333333333333333#########################3')
     make_view.admin_view = True
     make_view.save()
     return render(request,'viewimg.html',{'image':img})
 
 
+@custom_login_required
+def view_staff_attendance(request):
+    with connection.cursor() as cursor:
+
+        # cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where date >=curdate() and id not in (SELECT schedule_id from adminpart_staff_allocation);")
+        cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where date <= curdate() order by date ;")
+        row = cursor.fetchall()
+        rows = []
+        dates = []
+        for i in row:
+            dates.append(i[1])
+            if i[3] in rows:
+                continue
+            rows.append(i[3])
+        
+        
+
+    return render(request,'view_staff_attendance.html',{'rows':rows,'dates':dates})
+
+
+def get_attendanceBy_scheme(request):
+
+    scheme = request.GET.get('scheme')
+    print(scheme)
+
+    schedule_cnt = schedule.objects.filter(exam_name = scheme)
+    # print(len(schedule_cnt))
+
+    detail = staff_allocation.objects.filter(schedule__exam_name = scheme)
+
+    data = []
+    for i in schedule_cnt:
+        cr = {'date':i.date,'staff':[]}
+        for ii in detail:
+            if ii.schedule.date == i.date:
+                try:
+                    st_row = {'name':ii.staff_id.name+"   ---   "+str(ii.staff_id.dept)+"---"+str(ii.hall_id.hall_name)}
+                except:
+                    st_row = {'name':ii.staff_id.name+"   ---   "+str(ii.staff_id.dept)+"   ---   Examcell"}
+
+
+                cr['staff'].append(st_row)
+        data.append(cr)
+    print(data)
+    print(len(data))
+    print("========================")
+
+    new_data = [i for i in data if len(i['staff']) != 0]
+
+    print("========================")
+
+    # print(detail.values())
+    return JsonResponse({"message":"successfull",'data':new_data,'scheme':scheme})
+
+
+def get_attendanceBy_date(request):
+    date = request.GET.get('date')
+    from datetime import datetime
+
+    date_obj = datetime.strptime(date, "%B %d, %Y")
+    formatted_date = date_obj.strftime("%Y-%m-%d")
+
+    staff_det = staff_allocation.objects.filter(schedule__date = formatted_date)
+    print(staff_det.values())
+
+    data = []
+    for i in staff_det:
+        try:
+            cr = {'name':i.staff_id.name,'dept':i.staff_id.dept.d_name,'exam':i.schedule.exam_name,'hall':i.hall_id.hall_name}
+        except:
+            cr = {'name':i.staff_id.name,'dept':i.staff_id.dept.d_name,'exam':i.schedule.exam_name,'hall':'Examcell'}
+
+        data.append(cr)
+    
+    return JsonResponse({"message":"successfull",'data':data,'date':date,})
+
+@custom_login_required
+def get_detection_notification(request):
+    
+    with connection.cursor() as cursor:
+        result=[]
+        qry="select adminpart_malpractice.*,hour(datetime) as h,adminpart_hall.hall_name from adminpart_malpractice join adminpart_hall ON adminpart_hall.id=adminpart_malpractice.hall_id_id order by adminpart_malpractice.datetime DESC"
+        cursor.execute(qry)
+        data=cursor.fetchall()
+        # cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where date >=curdate() and id not in (SELECT schedule_id from adminpart_staff_allocation);")
+        # cursor.execute('''SELECT adminpart_malpractice.*, adminpart_hall.hall_name, adminpart_staff.name
+        #                     FROM adminpart_malpractice
+        #                     JOIN adminpart_hall ON adminpart_hall.id = adminpart_malpractice.hall_id_id
+        #                     JOIN adminpart_staff_allocation ON adminpart_staff_allocation.hall_id_id = adminpart_hall.id
+        #                     JOIN adminpart_staff ON adminpart_staff.id = adminpart_staff_allocation.staff_id_id 
+        #                     JOIN adminpart_schedule ON adminpart_schedule.id=adminpart_staff_allocation.schedule_id
+        #                     WHERE DATE(adminpart_malpractice.datetime) = adminpart_schedule.date
+        #                     GROUP BY adminpart_malpractice.id, adminpart_hall.hall_name, adminpart_staff.name 
+        #                     order by adminpart_malpractice.datetime DESC;''')
+        # row = cursor.fetchall()
+       
+        for i in data:
+            row=list(i)
+            sloat="Forenoon"
+            if int(i[6])>13:
+                sloat="Afternoon"
+
+            qry="select adminpart_staff.name from adminpart_staff join adminpart_staff_allocation on adminpart_staff_allocation.staff_id_id=adminpart_staff.id join adminpart_schedule on adminpart_schedule.id=adminpart_staff_allocation.schedule_id where adminpart_schedule.date='"+str(i[1]).split(' ')[0]+"' and slot='"+sloat+"' and adminpart_staff_allocation.hall_id_id='"+str(i[4])+"'"
+
+            cursor.execute(qry)
+            r=cursor.fetchone()
+            if r is not None:
+                row.append(r[0])
+                result.append(row)
+                print(row)
+    
+    malpractice_obcts = malpractice.objects.all()
+    for i in malpractice_obcts:
+        print('000000000000000000000000000000000000000000')
+        i.status=1
+        i.save()
+
+    
+
+    return render(request,'mal_noti_detected.html',{"notification":result})
+
+
+
+def get_mal_info(request):
+
+    # with connection.cursor() as cursor:
+
+    #     # cursor.execute("SELECT * FROM exam_cell.adminpart_schedule where date >=curdate() and id not in (SELECT schedule_id from adminpart_staff_allocation);")
+    #     cursor.execute('''SELECT adminpart_malpractice.*, adminpart_hall.hall_name, adminpart_staff.name
+    #                         FROM adminpart_malpractice
+    #                         JOIN adminpart_hall ON adminpart_hall.id = adminpart_malpractice.hall_id_id
+    #                         JOIN adminpart_staff_allocation ON adminpart_staff_allocation.hall_id_id = adminpart_hall.id
+    #                         JOIN adminpart_staff ON adminpart_staff.id = adminpart_staff_allocation.staff_id_id 
+    #                         JOIN adminpart_schedule ON adminpart_schedule.id=adminpart_staff_allocation.schedule_id
+    #                         WHERE DATE(adminpart_malpractice.datetime) = adminpart_schedule.date and adminpart_malpractice.status=0
+    #                         GROUP BY adminpart_malpractice.id, adminpart_hall.hall_name, adminpart_staff.name 
+    #                         order by adminpart_malpractice.datetime DESC;''')
+
+    #     row = cursor.fetchall()
+    
+    row = malpractice.objects.filter(status = 0)
+    
+    return JsonResponse({'message':True,'count':len(row)})
+
+
+
+
+
+
+
+
+
 
 # ---------------------------staff----------app-------------------------------
+# ---------------------------staff----------app-------------------------------
+# ---------------------------staff----------app-------------------------------
+
 
 
 @csrf_exempt
@@ -1519,7 +1679,7 @@ def staff_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        
+        print(username,password)
         try:
             check_user = login_table.objects.get(username=username)
             is_user_correct = check_user.username == username
@@ -1530,9 +1690,13 @@ def staff_login(request):
 
         if check_user is not None and is_correct and is_user_correct:
             staff_details = staff.objects.get(l_id = check_user.pk)
-            return JsonResponse({'status':True,'name':staff_details.name,'id':staff_details.pk,'type':staff_details.stafftype})
+            if staff_details.status == 'active':
+                return JsonResponse({'status':True,'name':staff_details.name,'id':staff_details.pk,'type':staff_details.stafftype})
+            else:
+                return JsonResponse({'success': False, 'message': 'user is blocked by admin'},status=401)
+
         else:
-            return JsonResponse({'success': False, 'message': 'Invalid credentials'},status=401)
+            return JsonResponse({'success': False, 'message': 'Incorrect Username Or Password'},status=401)
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
     
@@ -1750,3 +1914,134 @@ def get_report(request):
         print(report_mal.student_id.student,"=====================")
         return JsonResponse(row)
 
+
+
+@csrf_exempt
+def get_notification(request):
+    if request.POST:
+        uid = request.POST.get('uid')
+        print(uid,"******************************")
+
+        noti = staff_allocation.objects.filter(staff_id__id = uid,status = 'pending')
+        if len(noti) == 0:
+            return JsonResponse({'count':len(noti)},status = 401)
+
+
+        for i in noti:
+            i.status = 'viewed'
+            i.save()
+        print(len(noti))
+        return JsonResponse({'count':len(noti)})
+
+@csrf_exempt
+def get_mal_notification(request):
+    if request.POST:
+        staff_id = request.POST.get('id')
+        print(staff_id)
+
+        with connection.cursor() as cursor:
+            result=[]
+            qry="select adminpart_malpractice.*,hour(datetime) as h,adminpart_hall.hall_name from adminpart_malpractice join adminpart_hall ON adminpart_hall.id=adminpart_malpractice.hall_id_id order by adminpart_malpractice.datetime DESC"
+            cursor.execute(qry)
+            data=cursor.fetchall()
+           
+        
+            for i in data:
+                row=list(i)
+                sloat="Fornoon"
+                if int(i[6])>13:
+                    sloat="Afternoon"
+
+                qry="select adminpart_staff.* from adminpart_staff join adminpart_staff_allocation on adminpart_staff_allocation.staff_id_id=adminpart_staff.id join adminpart_schedule on adminpart_schedule.id=adminpart_staff_allocation.schedule_id where adminpart_schedule.date='"+str(i[1]).split(' ')[0]+"' and slot='"+sloat+"' and adminpart_staff_allocation.hall_id_id='"+str(i[4])+"' and adminpart_staff.id='"+str(staff_id)+"' "
+
+                cursor.execute(qry)
+                r=cursor.fetchone()
+                if r is not None:
+                    row.append(r[0])
+                    result.append(row)
+    # print(result,"99999999999999999999999999999999999999999")
+    
+    return JsonResponse({'result':result})
+
+@csrf_exempt
+def get_mal_notification_back(request):
+    if request.POST:
+        staff_id = request.POST.get('uid')
+        print(staff_id)
+
+        with connection.cursor() as cursor:
+            mal_id=[]
+            result=[]
+            qry="select adminpart_malpractice.*,hour(datetime) as h,adminpart_hall.hall_name from adminpart_malpractice join adminpart_hall ON adminpart_hall.id=adminpart_malpractice.hall_id_id where adminpart_malpractice.staff_status=0 order by adminpart_malpractice.datetime DESC"
+            cursor.execute(qry)
+            data=cursor.fetchall()
+            # print(data)
+           
+        
+            for i in data:
+                row=list(i)
+                sloat="Fornoon"
+                if int(i[6])>13:
+                    sloat="Afternoon"
+
+                qry="select adminpart_staff.* from adminpart_staff join adminpart_staff_allocation on adminpart_staff_allocation.staff_id_id=adminpart_staff.id join adminpart_schedule on adminpart_schedule.id=adminpart_staff_allocation.schedule_id where adminpart_schedule.date='"+str(i[1]).split(' ')[0]+"' and slot='"+sloat+"' and adminpart_staff_allocation.hall_id_id='"+str(i[4])+"' and adminpart_staff.id='"+str(staff_id)+"' "
+
+                cursor.execute(qry)
+                r=cursor.fetchone()
+                if r is not None:
+                    row.append(r[0])
+                    result.append(row)
+                    mal_id.append(row[0])
+                    # print(row)
+
+
+            if len(result)==0:
+                return JsonResponse({"msg":False},status=401)
+
+        
+
+        print(mal_id)
+        for i in mal_id:
+            mal_obj = malpractice.objects.get(id=i)
+            mal_obj.staff_status=1
+            mal_obj.save()
+        
+        
+        
+        
+
+
+
+
+    return JsonResponse({'count':len(result)})
+
+
+
+
+#########################----------REACT JS---------##############################
+# import json
+# @csrf_exempt
+# def login_view(request):
+#     if request.method == 'POST':
+#         data = request.body.decode('utf-8') # Decode the request body
+#         data_dict = json.loads(data) # Parse the JSON string to a dictionary
+#         username = data_dict.get('username')
+#         password = data_dict.get('password')
+#         print(username, password) #
+#         try:
+#             check_user = login_table.objects.get(username=username)
+#             is_user_correct = check_user.username == username
+#             is_correct = check_password(password, check_user.password)
+#         except:
+#             check_user = None
+
+
+#         if check_user is not None and is_correct and is_user_correct:
+#             staff_details = staff.objects.get(l_id = check_user.pk)
+#             return JsonResponse({'status':True,'name':staff_details.name,'id':staff_details.pk,'type':staff_details.stafftype})
+#         else:
+#             return JsonResponse({'success': False, 'message': 'Invalid credentials'},status=500)
+#     else:
+#         return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+#########################----------REACT JS---------##############################

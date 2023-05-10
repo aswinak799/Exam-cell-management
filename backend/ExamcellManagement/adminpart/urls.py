@@ -50,7 +50,22 @@ urlpatterns = [
     path('view_attendance/',views.view_attendance,name='view_attendance'),
     path('view_reported_malpractice',views.view_reported_malpractice,name='view_reported_malpractice'),
     path('get_info',views.get_info,name='get_info'),
+    path('get_mal_info',views.get_mal_info,name='get_mal_info'),
+
+    path('get_attendanceBy_scheme/',views.get_attendanceBy_scheme,name='get_attendanceBy_scheme'),
+    path('get_attendanceBy_date/',views.get_attendanceBy_date,name='get_attendanceBy_date'),
+    path('get_detection_notification',views.get_detection_notification,name='get_detection_notification'),
+
+
+
+
+
+
+
+
     path('view_image/<path:img>/<int:id>',views.view_image,name='view_image'),
+    path('view_staff_attendance',views.view_staff_attendance,name='view_staff_attendance'),
+
 
 
 
@@ -80,6 +95,16 @@ urlpatterns = [
     path('get_reports',views.get_reports,name='get_reports'),
     path('get_students',views.get_students,name='get_students'),
     path('get_report',views.get_report,name='get_report'),
+    path('get_notification',views.get_notification,name='get_notification'),
+    path('get_mal_notification',views.get_mal_notification,name='get_mal_notification'),
+    path('get_mal_notification_back',views.get_mal_notification_back,name='get_mal_notification_back'),
+
+
+
+
+    # path('login_view',views.login_view,name='login_view'),
+
+
 
 
 
