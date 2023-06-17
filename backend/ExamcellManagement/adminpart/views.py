@@ -497,7 +497,7 @@ def select_halls(request):
             if max_index_id<len(max_ob):             
                 maxindex=max_ob[max_index_id]
             # print(maxindex,'*************************')
-            # minindex=max_ob[len(max_ob)-1]
+            minindex=max_ob[len(max_ob)-1]
             if min_index_id<len(max_ob):
                 minindex=max_ob[min_index_id]
             
@@ -703,9 +703,15 @@ def download_seating(request,id):
     students = schedule_details.objects.filter(shedule_id__date = request.session['date'],shedule_id__slot = request.session['session'],hall_id = id)
     hall_name = students[0].hall_id.hall_name
     schedule_name = schedule.objects.get(slot = request.session['session'],date = request.session['date'])
+    date_obj = datetime.datetime.strptime(request.session['date'], "%Y-%m-%d").date()
+
+    # Format the date object as a string in the desired format
+    formatted_date_str = date_obj.strftime("%d-%m-%Y")
+
+
     # Build the table data
     table_data = [['Seat', 'Reg_no', 'Name', 'Code', 'Remark']]
-    head_data = [['Room :',hall_name,request.session['session'],request.session['date']]]
+    head_data = [['Room :',hall_name,request.session['session'],formatted_date_str]]
     for student in students:
         table_data.append([student.seat_no, student.reg_no, student.student,student.subject_id.code,])
         
@@ -779,6 +785,11 @@ def download_seating(request,id):
     # hall_name_spacer = Spacer(1, 0.2*inch)
     heading_spacer = Spacer(1, 0.25*inch)
     # date_spacer = Spacer(1, 0.25*inch)
+
+    count = [[" ","Total Number of Students : ",str(len(students))]]
+    countdata = Table(count,colWidths=[1.3*inch,2.0*inch, 1.0*inch])
+
+    
       
     # Add the heading, date, and table to the PDF document and save it
     # elements = [heading,heading1,heading2, date, table]
@@ -787,11 +798,12 @@ def download_seating(request,id):
     heading_spacer,
     heading1,
     heading_spacer,
-    heading_spacer,
     heading2,
     heading_spacer,
     head_data_table,
     table,
+    heading_spacer,
+    countdata
     ]
 
     doc.build(elements)
@@ -802,9 +814,13 @@ def download_attendance(request,id):
     students = schedule_details.objects.filter(shedule_id__date = request.session['date'],shedule_id__slot = request.session['session'],hall_id = id)
     hall_name = students[0].hall_id.hall_name
     schedule_name = schedule.objects.get(slot = request.session['session'],date = request.session['date'])
+    date_obj = datetime.datetime.strptime(request.session['date'], "%Y-%m-%d").date()
+
+    # Format the date object as a string in the desired format
+    formatted_date_str = date_obj.strftime("%d-%m-%Y")
     # Build the table data
     table_data = [['slno', 'Name and Reg_no', 'Course Code', 'Barcode', 'Signature']]
-    head_data = [['Room :',hall_name,request.session['session'],request.session['date']]]
+    head_data = [['Room :',hall_name,request.session['session'],formatted_date_str]]
     for student in students:
         table_data.append(["\n\n"+str(student.seat_no)+"\n\n", "\n\n"+str(student.student+"-"+student.reg_no)+"\n\n","\n\n"+str(student.subject_id.code)+'\n\n',])
         
@@ -876,6 +892,40 @@ def download_attendance(request,id):
     # hall_name_spacer = Spacer(1, 0.2*inch)
     heading_spacer = Spacer(1, 0.25*inch)
     # date_spacer = Spacer(1, 0.25*inch)
+
+    additional_text = '''I do hereby certify that I have examined the answer books of all the students in this exam hall and found all the entries in the facing page are correct. Also the barcodes pasted on this attendance sheet against a student and on his/her answer book are same and are corresponding to the concerned student.'''
+    additional_text_style = ParagraphStyle(
+        name='additional_text',
+        fontName='Helvetica',
+        fontSize=11,
+        leading=13,
+
+    )
+    additional_text_paragraph = Paragraph(additional_text, additional_text_style)
+
+    signature_text = '''Name and Signature of Invigilator 1:'''
+    signature_text_style = ParagraphStyle(
+        name='signature_text',
+        fontName='Helvetica',
+        fontSize=11,
+        leading=13,
+        alingnment=TA_LEFT
+
+    )
+    signature_text_para = Paragraph(signature_text, signature_text_style)
+
+    signature_text2 = '''Name and Signature of Invigilator 2:'''
+    signature_text_style2 = ParagraphStyle(
+        name='signature_text',
+        fontName='Helvetica',
+        fontSize=11,
+        leading=13,
+        alingnment=TA_RIGHT
+
+    )
+    signature_text_para2 = Paragraph(signature_text2, signature_text_style2)
+
+
       
     # Add the heading, date, and table to the PDF document and save it
     # elements = [heading,heading1,heading2, date, table]
@@ -887,6 +937,12 @@ def download_attendance(request,id):
     heading_spacer,
     head_data_table,
     table,
+    heading_spacer,
+    additional_text_paragraph,
+    heading_spacer,
+    signature_text_para,
+    heading_spacer,
+    signature_text_para2
     ]
 
     doc.build(elements)
@@ -969,9 +1025,9 @@ def seating(request):
         except:
             schedule_obj_exist = None
     
-        fs = FileSystemStorage()
-        filename = fs.save(excel_file.name, excel_file)
-        filepath = fs.path(filename)
+        # fs = FileSystemStorage()
+        # filename = fs.save(excel_file.name, excel_file)
+        # filepath = fs.path(filename)
         df = pd.read_excel(excel_file)
         for index, row in df.iterrows():
             if index == 1:
@@ -1219,9 +1275,14 @@ def download_seating_history(request,id):
     students = schedule_details.objects.filter(shedule_id__id = request.session['schedule_id_history'],hall_id = id)
     hall_name = students[0].hall_id.hall_name
     schedule_name = schedule.objects.get(id = request.session['schedule_id_history'])
+
+    date_obj = datetime.datetime.strptime(str(schedule_name.date), "%Y-%m-%d").date()
+
+    # Format the date object as a string in the desired format
+    formatted_date_str = date_obj.strftime("%d-%m-%Y")
     # Build the table data
     table_data = [['Seat', 'Reg_no', 'Name', 'Code', 'Remark']]
-    head_data = [['Room :',hall_name,schedule_name.slot,schedule_name.date]]
+    head_data = [['Room :',hall_name,schedule_name.slot,formatted_date_str]]
     for student in students:
         table_data.append([student.seat_no, student.reg_no, student.student,student.subject_id.code,])
         
@@ -1295,6 +1356,10 @@ def download_seating_history(request,id):
     # hall_name_spacer = Spacer(1, 0.2*inch)
     heading_spacer = Spacer(1, 0.25*inch)
     # date_spacer = Spacer(1, 0.25*inch)
+    count = [[" ","Total Number of Students : ",str(len(students))]]
+    countdata = Table(count,colWidths=[1.3*inch,2.0*inch, 1.0*inch])
+
+    
       
     # Add the heading, date, and table to the PDF document and save it
     # elements = [heading,heading1,heading2, date, table]
@@ -1303,11 +1368,12 @@ def download_seating_history(request,id):
     heading_spacer,
     heading1,
     heading_spacer,
-    heading_spacer,
     heading2,
     heading_spacer,
     head_data_table,
     table,
+    heading_spacer,
+    countdata
     ]
 
     doc.build(elements)
@@ -1319,8 +1385,13 @@ def download_attendance_history(request,id):
     hall_name = students[0].hall_id.hall_name
     schedule_name = schedule.objects.get(id = request.session['schedule_id_history'])
     # Build the table data
+    print(schedule_name.date)
+    date_obj = datetime.datetime.strptime(str(schedule_name.date), "%Y-%m-%d").date()
+
+    # Format the date object as a string in the desired format
+    formatted_date_str = date_obj.strftime("%d-%m-%Y")
     table_data = [['slno', 'Name and Reg_no', 'Course Code', 'Barcode', 'Signature']]
-    head_data = [['Room :',hall_name,schedule_name.slot,schedule_name.date]]
+    head_data = [['Room :',hall_name,schedule_name.slot,formatted_date_str]]
     for student in students:
         table_data.append(["\n\n"+str(student.seat_no)+"\n\n", "\n\n"+str(student.student+"-"+student.reg_no)+"\n\n","\n\n"+str(student.subject_id.code)+'\n\n',])
         
@@ -1391,7 +1462,39 @@ def download_attendance_history(request,id):
     # hall_name_para = Paragraph(hall_name, hall_style)
     # hall_name_spacer = Spacer(1, 0.2*inch)
     heading_spacer = Spacer(1, 0.25*inch)
-    # date_spacer = Spacer(1, 0.25*inch)
+    additional_text = '''I do hereby certify that I have examined the answer books of all the students in this exam hall and found all the entries in the facing page are correct. Also the barcodes pasted on this attendance sheet against a student and on his/her answer book are same and are corresponding to the concerned student.'''
+    additional_text_style = ParagraphStyle(
+        name='additional_text',
+        fontName='Helvetica',
+        fontSize=11,
+        leading=13,
+
+    )
+    additional_text_paragraph = Paragraph(additional_text, additional_text_style)
+
+    signature_text = '''Name and Signature of Invigilator 1:'''
+    signature_text_style = ParagraphStyle(
+        name='signature_text',
+        fontName='Helvetica',
+        fontSize=11,
+        leading=13,
+        alingnment=TA_LEFT
+
+    )
+    signature_text_para = Paragraph(signature_text, signature_text_style)
+
+    signature_text2 = '''Name and Signature of Invigilator 2:'''
+    signature_text_style2 = ParagraphStyle(
+        name='signature_text',
+        fontName='Helvetica',
+        fontSize=11,
+        leading=13,
+        alingnment=TA_RIGHT
+
+    )
+    signature_text_para2 = Paragraph(signature_text2, signature_text_style2)
+
+
       
     # Add the heading, date, and table to the PDF document and save it
     # elements = [heading,heading1,heading2, date, table]
@@ -1403,6 +1506,12 @@ def download_attendance_history(request,id):
     heading_spacer,
     head_data_table,
     table,
+    heading_spacer,
+    additional_text_paragraph,
+    heading_spacer,
+    signature_text_para,
+    heading_spacer,
+    signature_text_para2
     ]
 
     doc.build(elements)
@@ -1660,6 +1769,11 @@ def get_mal_info(request):
     return JsonResponse({'message':True,'count':len(row)})
 
 
+def get_waiting_students(request):
+
+    students = studentDetails.objects.all()
+
+    return JsonResponse({'message':True,'count':len(students)})
 
 
 
@@ -1948,7 +2062,7 @@ def get_mal_notification(request):
         
             for i in data:
                 row=list(i)
-                sloat="Fornoon"
+                sloat="Forenoon"
                 if int(i[6])>13:
                     sloat="Afternoon"
 
@@ -1975,14 +2089,17 @@ def get_mal_notification_back(request):
             qry="select adminpart_malpractice.*,hour(datetime) as h,adminpart_hall.hall_name from adminpart_malpractice join adminpart_hall ON adminpart_hall.id=adminpart_malpractice.hall_id_id where adminpart_malpractice.staff_status=0 order by adminpart_malpractice.datetime DESC"
             cursor.execute(qry)
             data=cursor.fetchall()
-            # print(data)
+            # print(data[0])
+            
            
         
             for i in data:
                 row=list(i)
-                sloat="Fornoon"
+                sloat="Forenoon"
                 if int(i[6])>13:
                     sloat="Afternoon"
+                    print("##########################")
+
 
                 qry="select adminpart_staff.* from adminpart_staff join adminpart_staff_allocation on adminpart_staff_allocation.staff_id_id=adminpart_staff.id join adminpart_schedule on adminpart_schedule.id=adminpart_staff_allocation.schedule_id where adminpart_schedule.date='"+str(i[1]).split(' ')[0]+"' and slot='"+sloat+"' and adminpart_staff_allocation.hall_id_id='"+str(i[4])+"' and adminpart_staff.id='"+str(staff_id)+"' "
 
@@ -2007,13 +2124,8 @@ def get_mal_notification_back(request):
             mal_obj.save()
         
         
-        
-        
 
-
-
-
-    return JsonResponse({'count':len(result)})
+        return JsonResponse({'count':len(result)})
 
 
 

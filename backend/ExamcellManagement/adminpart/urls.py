@@ -65,6 +65,8 @@ urlpatterns = [
 
     path('view_image/<path:img>/<int:id>',views.view_image,name='view_image'),
     path('view_staff_attendance',views.view_staff_attendance,name='view_staff_attendance'),
+    path('get_waiting_students',views.get_waiting_students,name='get_waiting_students'),
+
 
 
 

@@ -10,7 +10,16 @@
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+  
 
+$(function(){
+  //tomorrow.setDate(today.getDate() + 1)
+  var currentDate = new Date().toISOString().split("T")[0];
+
+$('#myDateInput').attr('min', currentDate);
+});
+  // Set the minimum date for the input field
+  
   function showMessage() {
     Swal.fire({
       title:"message",
@@ -24,7 +33,7 @@
   }
 
   function buttonClick() {
-    var date = document.getElementById('date')
+    var date = document.getElementById('myDateInput')
     var slot = document.getElementById('slot')
     var file = document.getElementById('inputGroupFile01')
     // console.log(file.value),"*********************";
@@ -45,7 +54,12 @@
       <div class="col-12 col-lg-9 col-xl-7">
         <div class="card shadow-2-strong card-registration" style="border-radius: 15px;">
           <div class="card-body  p-md-5">
-            <h3 class="mb-4 pb-2 pb-md-0 mb-md-5">Upload Appearinglist</h3>
+            <div class="row">
+              <h3 class="col-md-8 mb-4 pb-2 pb-md-0 mb-md-5">Upload Appearinglist</h3>
+              <h6 id="wait" ></h6>
+
+
+            </div>
             <form action="{% url 'seating' %}" method="post" enctype="multipart/form-data">
               {% csrf_token %}
            
@@ -53,8 +67,8 @@
                 <div class="col-md-6 mb-4">
 
                   <div class="form-outline">
-                    <label class="form-label" for="date">Date</label>
-                    <input type="date" id="date" class="form-control form-control-lg" name="date" required>
+                    <label class="form-label" for="myDateInput">Date</label>
+                    <input type="date" id="myDateInput" class="form-control form-control-lg" name="date" required>
                     
                   </div>
 
@@ -111,6 +125,32 @@
     </div>
   </div>
 </section>
+
+<script>
+ 
+ $(document).ready(function() {
+      var students = document.getElementById('wait');
+      
+
+    $.ajax({
+      url: '/get_waiting_students',
+      type: 'GET',
+      dataType: 'json',
+      success: function(data) {
+        students.innerHTML = data.count+"-students Uploaded";
+        students.style.color = 'red';
+        students.style.fontWeight = "bold"
+          // Handle the response data here
+      },
+      error: function(xhr, status, error) {
+          // Handle the error here
+      }
+  });
+
+});
+
+
+</script>
 
 <style>
     .btn-lg{
